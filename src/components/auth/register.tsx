@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "../ui/button";
 import { FcGoogle } from "react-icons/fc";
+import { BsGithub } from "react-icons/bs";
 import {
   Form,
   FormControl,
@@ -148,6 +149,11 @@ function Register() {
       <Button variant="outline" className="w-full">
         <FcGoogle />
         Continue with Google
+      </Button>
+
+      <Button variant="outline" className="w-full">
+        <BsGithub />
+        Continue with GitHub
       </Button>
     </Form>
   );
