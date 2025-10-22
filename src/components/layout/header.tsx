@@ -1,9 +1,12 @@
 import Image from "next/image";
+import Link from "next/link";
 
 function Header() {
   return (
     <div>
-      <Image src="/logo.png" alt="Logo" width={100} height={100} />
+      <Link href="/">
+        <Image src="/logo.png" alt="Logo" width={150} height={150} />
+      </Link>
     </div>
   );
 }
