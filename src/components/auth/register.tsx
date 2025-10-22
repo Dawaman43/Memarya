@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "../ui/button";
 import { FcGoogle } from "react-icons/fc";
-import { BsGithub } from "react-icons/bs";
+import { BsGithub, BsLinkedin, BsTwitterX } from "react-icons/bs";
 import { FiUser, FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import {
   Form,
@@ -84,7 +84,7 @@ function Register() {
   async function handleSocialSignIn({
     socialProvider,
   }: {
-    socialProvider: "google" | "github";
+    socialProvider: "google" | "github" | "linkedin" | "twitter";
   }) {
     try {
       setLoading(true);
@@ -217,7 +217,7 @@ function Register() {
         <span className="h-px bg-border flex-1" />
       </div>
 
-      <div className="flex">
+      <div className="flex justify-center items-center gap-4">
         <Button
           variant="outline"
           type="button"
@@ -232,6 +232,22 @@ function Register() {
           onClick={() => handleSocialSignIn({ socialProvider: "github" })}
         >
           <BsGithub />
+        </Button>
+
+        <Button
+          variant="outline"
+          type="button"
+          onClick={() => handleSocialSignIn({ socialProvider: "linkedin" })}
+        >
+          <BsLinkedin />
+        </Button>
+
+        <Button
+          variant="outline"
+          type="button"
+          onClick={() => handleSocialSignIn({ socialProvider: "twitter" })}
+        >
+          <BsTwitterX />
         </Button>
       </div>
     </Form>
