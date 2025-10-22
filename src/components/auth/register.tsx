@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "../ui/button";
+import { FcGoogle } from "react-icons/fc";
 import {
   Form,
   FormControl,
@@ -144,6 +145,10 @@ function Register() {
       </form>
 
       <span>or</span>
+      <Button variant="outline" className="w-full">
+        <FcGoogle />
+        Continue with Google
+      </Button>
     </Form>
   );
 }
