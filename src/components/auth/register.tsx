@@ -32,21 +32,30 @@ function Register() {
   });
 
   async function onSubmit(data: RegisterData) {
-    const { d, e } = await authClient.signUp.email({
-      name: data.name,
-      email: data.email,
-      password: data.password,
-    });
-    if (e) {
-      toast.error(`Registration failed: ${e.message}`);
-      return;
+    try {
+      setLoading(true);
+      const { d, e } = await authClient.signUp.email({
+        name: data.name,
+        email: data.email,
+        password: data.password,
+      });
+      if (e) {
+        toast.error(`Registration failed: ${e.message}`);
+        return;
+      }
+
+      if (d) {
+        console.log("Register data:", d);
+      }
+
+      toast.success(
+        "Registration successful! Please check your email to verify."
+      );
+    } catch (error) {
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    toast.success(
-      "Registration successful! Please check your email to verify."
-    );
-
-    console.log("Register data:", data);
   }
 
   return <div>register</div>;
