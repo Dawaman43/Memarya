@@ -1,6 +1,6 @@
 // lib/auth-client.ts
 import { createAuthClient } from "better-auth/client";
-import { useAtomValue, type Atom } from "jotai";
+import { useAtomValue } from "jotai";
 
 export const authClient = createAuthClient({
   // Use a relative URL so it works both locally and in production without requiring an env var
@@ -11,13 +11,12 @@ export const authClient = createAuthClient({
 export const { signIn, signOut, signUp } = authClient;
 
 // Provide a React hook wrapper around the Better Auth session atom
-export function useSession(): UseSessionResult {
+export function useSession() {
   // better-auth exposes a Jotai ReadableAtom; useAtomValue subscribes to it
   // and returns the current value { data, error, isPending }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return useAtomValue(authClient.useSession as any) as UseSessionResult;
+  return useAtomValue(authClient.useSession as any);
 }
 
 // If you need the return type of the hook elsewhere, you can import this type
-type AtomValue<T> = T extends Atom<infer V> ? V : never;
-export type UseSessionResult = AtomValue<typeof authClient.useSession>;
+export type UseSessionResult = ReturnType<typeof useSession>;
