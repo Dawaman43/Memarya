@@ -2,9 +2,20 @@
 import { createAuthClient } from "better-auth/client";
 import { useAtomValue } from "jotai";
 
+// Compute an absolute base URL for Better Auth (required)
+function getBaseUrl() {
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+  // Fallback for SSR/bundling context
+  const env = process.env.NEXT_PUBLIC_APP_URL;
+  if (env) return env.replace(/\/$/, "");
+  // Sensible default for local dev
+  return "http://localhost:3000";
+}
+
 export const authClient = createAuthClient({
-  // Use a relative URL so it works both locally and in production without requiring an env var
-  baseURL: "/api/auth",
+  baseURL: `${getBaseUrl()}/api/auth`,
 });
 
 // Re-export client helpers
