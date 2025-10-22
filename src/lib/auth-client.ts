@@ -8,7 +8,10 @@ function getBaseUrl() {
     return window.location.origin;
   }
   // Fallback for SSR/bundling context
-  const env = process.env.NEXT_PUBLIC_APP_URL;
+  const env =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    process.env.BETTER_AUTH_URL;
   if (env) return env.replace(/\/$/, "");
   // Sensible default for local dev
   return "http://localhost:3000";
