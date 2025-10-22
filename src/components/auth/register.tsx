@@ -217,25 +217,21 @@ function Register() {
         <span className="h-px bg-border flex-1" />
       </div>
 
-      <div className="grid grid-cols-1 gap-2">
+      <div className="flex">
         <Button
           variant="outline"
-          className="w-full"
           type="button"
           onClick={() => handleSocialSignIn({ socialProvider: "google" })}
         >
           <FcGoogle />
-          Continue with Google
         </Button>
 
         <Button
           variant="outline"
-          className="w-full"
           type="button"
           onClick={() => handleSocialSignIn({ socialProvider: "github" })}
         >
           <BsGithub />
-          Continue with GitHub
         </Button>
       </div>
     </Form>
