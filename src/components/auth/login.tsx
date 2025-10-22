@@ -18,6 +18,7 @@ import { Input } from "../ui/input";
 import { FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 import { BsGithub } from "react-icons/bs";
+import { useRouter } from "next/navigation";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -26,6 +27,7 @@ const loginSchema = z.object({
 
 type LoginData = z.infer<typeof loginSchema>;
 function Login() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const form = useForm<LoginData>({
@@ -52,7 +54,7 @@ function Login() {
       if (resData) {
         console.log("Login data:", resData);
         toast.success("Login successful!");
-        // router.push("/"); // TODO: Redirect to a protected route
+        router.push("/");
       }
     } catch (error) {
       const message =
