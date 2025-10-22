@@ -142,6 +142,8 @@ function Register() {
           {loading ? "Registering..." : "Register"}
         </Button>
       </form>
+
+      <span>or</span>
     </Form>
   );
 }
