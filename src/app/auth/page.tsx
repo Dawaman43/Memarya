@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import SocialAuth from "@/components/auth/social";
 
 function AuthPage() {
   return (
@@ -38,6 +39,7 @@ function AuthPage() {
               <Register />
             </TabsContent>
           </Tabs>
+          <SocialAuth />
         </CardContent>
       </Card>
     </div>

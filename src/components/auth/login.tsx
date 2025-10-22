@@ -122,33 +122,6 @@ function Login() {
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Logging in..." : "Login"}
         </Button>
-
-        <div className="flex items-center gap-3 py-1">
-          <span className="h-px bg-border flex-1" />
-          <span className="text-xs text-muted-foreground">or</span>
-          <span className="h-px bg-border flex-1" />
-        </div>
-
-        <div className="grid grid-cols-1 gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={() => toast.info("Google sign-in coming soon")}
-          >
-            <FcGoogle />
-            Continue with Google
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={() => toast.info("GitHub sign-in coming soon")}
-          >
-            <BsGithub />
-            Continue with GitHub
-          </Button>
-        </div>
       </form>
     </Form>
   );
