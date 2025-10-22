@@ -70,7 +70,11 @@ function Register() {
         "Registration successful! Please check your email to verify."
       );
     } catch (error) {
-      toast.error("An unexpected error occurred. Please try again.");
+      const message =
+        error instanceof Error
+          ? error.message
+          : String(error ?? "Unknown error");
+      toast.error(`Register failed: ${message}`);
     } finally {
       setLoading(false);
     }
