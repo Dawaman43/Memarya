@@ -6,8 +6,6 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "../ui/button";
-import { FcGoogle } from "react-icons/fc";
-import { BsGithub, BsLinkedin, BsTwitterX } from "react-icons/bs";
 import { FiUser, FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import {
   Form,
@@ -18,7 +16,6 @@ import {
   FormMessage,
 } from "../ui/form";
 import { Input } from "../ui/input";
-import { auth } from "@/lib/auth";
 
 const registerSchema = z
   .object({
