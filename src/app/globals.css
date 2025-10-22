@@ -8,6 +8,19 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  /* Google Font tokens mapped to their variables for Tailwind utilities */
+  --font-inter: var(--font-gf-inter);
+  --font-poppins: var(--font-gf-poppins);
+  --font-montserrat: var(--font-gf-montserrat);
+  --font-raleway: var(--font-gf-raleway);
+  --font-playfair: var(--font-gf-playfair);
+  --font-lora: var(--font-gf-lora);
+  --font-oswald: var(--font-gf-oswald);
+  --font-bebas-neue: var(--font-gf-bebas-neue);
+  --font-nunito: var(--font-gf-nunito);
+  --font-merriweather: var(--font-gf-merriweather);
+  --font-roboto-slab: var(--font-gf-roboto-slab);
+  --font-jetbrains-mono: var(--font-gf-jetbrains-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
