@@ -18,6 +18,7 @@ import {
   FormMessage,
 } from "../ui/form";
 import { Input } from "../ui/input";
+import { auth } from "@/lib/auth";
 
 const registerSchema = z
   .object({
@@ -80,6 +81,27 @@ function Register() {
     }
   }
 
+  async function handleSocialSignIn({
+    socialProvider,
+  }: {
+    socialProvider: "google" | "github";
+  }) {
+    try {
+      setLoading(true);
+      await authClient.signIn.social({
+        provider: socialProvider,
+      });
+      toast.success(`Redirecting to ${socialProvider} for sign-in...`);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : String(error ?? "Unknown error");
+      toast.error(`Sign-in failed: ${message}`);
+    } finally {
+      setLoading(false);
+    }
+  }
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -200,7 +222,7 @@ function Register() {
           variant="outline"
           className="w-full"
           type="button"
-          onClick={() => toast.info("Google sign-up coming soon")}
+          onClick={() => handleSocialSignIn({ socialProvider: "google" })}
         >
           <FcGoogle />
           Continue with Google
@@ -210,7 +232,7 @@ function Register() {
           variant="outline"
           className="w-full"
           type="button"
-          onClick={() => toast.info("GitHub sign-up coming soon")}
+          onClick={() => handleSocialSignIn({ socialProvider: "github" })}
         >
           <BsGithub />
           Continue with GitHub
