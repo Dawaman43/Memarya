@@ -10,15 +10,14 @@ export const authClient = createAuthClient({
 // Re-export client helpers
 export const { signIn, signOut, signUp } = authClient;
 
-// Wrap the Better Auth session atom in a React hook for convenient usage
-const sessionAtom = authClient.useSession;
+// Provide a React hook wrapper around the Better Auth session atom
 export function useSession(): UseSessionResult {
   // better-auth exposes a Jotai ReadableAtom; useAtomValue subscribes to it
   // and returns the current value { data, error, isPending }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return useAtomValue(sessionAtom as any) as UseSessionResult;
+  return useAtomValue(authClient.useSession as any) as UseSessionResult;
 }
 
 // If you need the return type of the hook elsewhere, you can import this type
 type AtomValue<T> = T extends Atom<infer V> ? V : never;
-export type UseSessionResult = AtomValue<typeof sessionAtom>;
+export type UseSessionResult = AtomValue<typeof authClient.useSession>;
