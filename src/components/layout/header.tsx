@@ -77,15 +77,6 @@ function Header({ user }: HeaderProps) {
             <NavigationMenu>
               <NavigationMenuList className="flex items-center gap-2">
                 <NavigationMenuItem>
-                  <Link href="/" legacyBehavior passHref>
-                    <NavigationMenuLink className="group flex h-10 items-center justify-center px-3 rounded-lg text-sm font-medium transition-colors focus:outline-none">
-                      <Home className="mr-2 h-4 w-4" />
-                      Home
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-
-                <NavigationMenuItem>
                   <NavigationMenuTrigger className="group flex h-10 items-center justify-center px-3 rounded-lg text-sm font-medium transition-colors">
                     Explore
                     <Sparkles className="ml-1 h-4 w-4 group-data-[state=open]:rotate-12 transition-transform" />
@@ -215,15 +206,6 @@ function Header({ user }: HeaderProps) {
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
-
-                <NavigationMenuItem>
-                  <Link href="/community" legacyBehavior passHref>
-                    <NavigationMenuLink className="group flex h-10 items-center justify-center px-3 rounded-lg text-sm font-medium transition-colors focus:outline-none">
-                      <Users className="mr-2 h-4 w-4" />
-                      Community
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
           </div>
@@ -248,8 +230,8 @@ function Header({ user }: HeaderProps) {
             className="relative h-9 w-9 rounded-lg transition-colors"
           >
             <Bell className="h-5 w-5" />
-            <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full animate-ping" />
-            <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full" />
+            <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-destructive animate-ping" />
+            <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-destructive" />
           </Button>
 
           <ThemeToggle />

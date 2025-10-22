@@ -18,7 +18,7 @@ import {
 import "./globals.css";
 import { Toaster } from "sonner";
 import Header from "@/components/layout/header";
-import { ThemeProvider } from "next-themes";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
