@@ -14,6 +14,7 @@ import {
   Bell,
   LogOut,
   Sparkles,
+  FileText,
 } from "lucide-react";
 import {
   NavigationMenu,
@@ -220,6 +221,17 @@ function Header({ user }: HeaderProps) {
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <NavigationMenuLink asChild>
+                    <Link
+                      href="/docs"
+                      className="group inline-flex h-10 w-max items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      Docs
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
           </div>
@@ -390,6 +402,11 @@ function Header({ user }: HeaderProps) {
               <DropdownMenuItem asChild>
                 <Link href="/community" className="flex items-center w-full">
                   <Users className="mr-2 h-4 w-4" /> Community
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/docs" className="flex items-center w-full">
+                  <FileText className="mr-2 h-4 w-4" /> Docs
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
