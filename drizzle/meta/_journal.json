@@ -15,6 +15,13 @@
       "when": 1761111420721,
       "tag": "0001_little_edwin_jarvis",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1761203916193,
+      "tag": "0002_chunky_whistler",
+      "breakpoints": true
     }
   ]
 }
