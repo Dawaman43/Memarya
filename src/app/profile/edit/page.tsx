@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -29,10 +30,24 @@ const DICEBEAR_STYLES = [
   "notionists",
 ];
 
-function dicebearUrl(style: string, seed: string) {
+function dicebearUrl(
+  style: string,
+  seed: string,
+  opts?: { bg?: string; transparent?: boolean; size?: number }
+) {
   const s = encodeURIComponent(style);
   const q = encodeURIComponent(seed || "User");
-  return `https://api.dicebear.com/7.x/${s}/svg?seed=${q}`;
+  const params = new URLSearchParams({ seed: q });
+  if (opts?.size) params.set("size", String(opts.size));
+  if (opts?.transparent) {
+    // transparent background by default; do nothing
+  } else if (opts?.bg) {
+    // DiceBear expects hex without '#'
+    const color = opts.bg.replace(/^#/, "");
+    params.set("backgroundType", "solid");
+    params.set("backgroundColor", color);
+  }
+  return `https://api.dicebear.com/7.x/${s}/svg?${params.toString()}`;
 }
 
 export default function EditProfilePage() {
@@ -44,6 +59,13 @@ export default function EditProfilePage() {
   const [style, setStyle] = useState<string>(DICEBEAR_STYLES[0]);
   const [seed, setSeed] = useState<string>("");
   const [selectedImage, setSelectedImage] = useState<string>("");
+  const [bio, setBio] = useState<string>("");
+  const [location, setLocation] = useState<string>("");
+  const [links, setLinks] = useState<string[]>([""]); // simple list of URLs
+  // Avatar controls
+  const [bgColor, setBgColor] = useState<string>("");
+  const [transparentBg, setTransparentBg] = useState<boolean>(true);
+  const [size, setSize] = useState<number>(128);
   const initials = useMemo(() => {
     const base = name || user?.name || "?";
     return base
@@ -59,18 +81,45 @@ export default function EditProfilePage() {
       const defaultSeed = user.name || user.email || "User";
       setSeed(defaultSeed);
       setSelectedImage(
-        user.image || dicebearUrl(DICEBEAR_STYLES[0], defaultSeed)
+        user.image || dicebearUrl(DICEBEAR_STYLES[0], defaultSeed, { size })
       );
+      // Try to prefill extra fields from API
+      fetch("/api/profile")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          const u = data?.user;
+          if (u) {
+            setBio(u.bio || "");
+            setLocation(u.location || "");
+            try {
+              const parsed = u.links ? JSON.parse(u.links) : [];
+              if (Array.isArray(parsed)) {
+                const urls = parsed
+                  .map((x: any) => (typeof x === "string" ? x : x?.url))
+                  .filter((x: any) => typeof x === "string") as string[];
+                setLinks(urls.length ? urls : [""]);
+              }
+            } catch {}
+          }
+        })
+        .catch(() => {});
     }
-  }, [user]);
+  }, [user, size]);
 
   const samples = useMemo(() => {
     const base = seed || "User";
     return Array.from({ length: 8 }).map((_, i) => {
       const sampleSeed = `${base}-${i + 1}`;
-      return { seed: sampleSeed, url: dicebearUrl(style, sampleSeed) };
+      return {
+        seed: sampleSeed,
+        url: dicebearUrl(style, sampleSeed, {
+          bg: bgColor,
+          transparent: transparentBg,
+          size,
+        }),
+      };
     });
-  }, [style, seed]);
+  }, [style, seed, bgColor, transparentBg, size]);
 
   if (!user) {
     return (
@@ -96,11 +145,18 @@ export default function EditProfilePage() {
       const res = await fetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: trimmed, image: selectedImage }),
+        body: JSON.stringify({
+          name: trimmed,
+          image: selectedImage,
+          bio,
+          location,
+          links: links.filter((l) => l && l.trim().length),
+        }),
       });
       if (!res.ok) throw new Error("Failed");
       toast.success("Profile updated");
-      // Navigate back to profile
+      // Optimistic: refresh current route and profile page
+      router.refresh();
       router.push("/profile");
     } catch (e) {
       toast.error("Could not update profile");
@@ -123,7 +179,7 @@ export default function EditProfilePage() {
         <CardHeader>
           <CardTitle>Profile details</CardTitle>
           <CardDescription>
-            Update your name and choose a free avatar.
+            Update your profile info and choose a free avatar.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -145,6 +201,58 @@ export default function EditProfilePage() {
                   placeholder="Your name"
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="Where are you based?"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bio">Bio</Label>
+                <Textarea
+                  id="bio"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="Tell us a bit about yourself"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Links</Label>
+                <div className="space-y-2">
+                  {links.map((l, idx) => (
+                    <div key={idx} className="flex gap-2">
+                      <Input
+                        value={l}
+                        onChange={(e) => {
+                          const copy = [...links];
+                          copy[idx] = e.target.value;
+                          setLinks(copy);
+                        }}
+                        placeholder="https://..."
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() =>
+                          setLinks(links.filter((_, i) => i !== idx))
+                        }
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => setLinks((prev) => [...prev, ""])}
+                  >
+                    Add link
+                  </Button>
+                </div>
+              </div>
               <div className="space-y-3">
                 <Label>Avatar style</Label>
                 <Tabs value={style} onValueChange={setStyle} className="w-full">
@@ -157,14 +265,48 @@ export default function EditProfilePage() {
                   </TabsList>
                   {DICEBEAR_STYLES.map((s) => (
                     <TabsContent key={s} value={s} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor={`seed-${s}`}>Avatar seed</Label>
-                        <Input
-                          id={`seed-${s}`}
-                          value={seed}
-                          onChange={(e) => setSeed(e.target.value)}
-                          placeholder="Type any word to generate"
-                        />
+                      <div className="grid gap-4 md:grid-cols-3">
+                        <div className="space-y-2">
+                          <Label htmlFor={`seed-${s}`}>Avatar seed</Label>
+                          <Input
+                            id={`seed-${s}`}
+                            value={seed}
+                            onChange={(e) => setSeed(e.target.value)}
+                            placeholder="Type any word to generate"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`size-${s}`}>Size</Label>
+                          <Input
+                            id={`size-${s}`}
+                            type="number"
+                            min={64}
+                            max={256}
+                            value={size}
+                            onChange={(e) =>
+                              setSize(Number(e.target.value) || 128)
+                            }
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`bg-${s}`}>Background color</Label>
+                          <div className="flex gap-2 items-center">
+                            <Input
+                              id={`bg-${s}`}
+                              value={bgColor}
+                              onChange={(e) => setBgColor(e.target.value)}
+                              placeholder="e.g. ffe08a or #ffe08a"
+                              disabled={transparentBg}
+                            />
+                            <Button
+                              type="button"
+                              variant={transparentBg ? "secondary" : "outline"}
+                              onClick={() => setTransparentBg(!transparentBg)}
+                            >
+                              {transparentBg ? "Transparent" : "Solid"}
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                       <div className="grid grid-cols-4 gap-3">
                         {samples.map(({ seed: sd, url }) => (
@@ -187,7 +329,13 @@ export default function EditProfilePage() {
                           type="button"
                           variant="secondary"
                           onClick={() =>
-                            setSelectedImage(dicebearUrl(s, seed || "User"))
+                            setSelectedImage(
+                              dicebearUrl(s, seed || "User", {
+                                bg: bgColor,
+                                transparent: transparentBg,
+                                size,
+                              })
+                            )
                           }
                         >
                           Use this style
