@@ -316,7 +316,9 @@ function Header({ user }: HeaderProps) {
                     e.preventDefault();
                     try {
                       await signOut();
-                      router.push("/auth");
+                      // Ensure UI and any SSR boundaries reflect the new state
+                      router.replace("/auth");
+                      router.refresh();
                     } catch (err) {
                       console.error("Sign out failed", err);
                     }
