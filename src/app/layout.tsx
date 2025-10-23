@@ -86,8 +86,10 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   // SSR: get session to avoid client pop-in
+  const rawHeaders =
+    (await (nextHeaders() as unknown as Promise<Headers>)) as unknown as Headers;
   const session = await auth.api.getSession({
-    headers: new Headers(nextHeaders()),
+    headers: new Headers(rawHeaders),
   });
   const user = session?.user as
     | { name: string; email: string; image?: string }
