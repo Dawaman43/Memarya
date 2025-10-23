@@ -5,6 +5,11 @@ async function middleware(req: NextRequest) {
   const session = await auth.api.getSession({
     headers: req.headers,
   });
+
+  const { pathname } = req.nextUrl;
+
+  const protectedPaths = ["/dashboard", "/profile", "/settings"];
+
   return NextResponse.next();
 }
 
