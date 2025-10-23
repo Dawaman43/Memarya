@@ -8,7 +8,7 @@ async function middleware(req: NextRequest) {
 
   const { pathname } = req.nextUrl;
 
-  const protectedPaths = ["/dashboard", "/profile", "/settings"];
+  const protectedPaths = ["/dashboard", "/profile", "/settings", "/"];
 
   const isProtected = protectedPaths.some((path) => pathname.startsWith(path));
 
