@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import {
   Geist,
   Geist_Mono,
@@ -18,6 +19,7 @@ import {
 import "./globals.css";
 import { Toaster } from "sonner";
 import Header from "@/components/layout/header";
+import { auth } from "@/lib/auth";
 import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = Geist({
@@ -78,11 +80,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // SSR: get session to avoid client pop-in
+  const session = await auth.api.getSession({ headers: headers() });
+  const user = session?.user as
+    | { name: string; email: string; image?: string }
+    | undefined;
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -112,7 +119,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Toaster />
-          <Header />
+          <Header user={user} />
           {children}
         </ThemeProvider>
       </body>

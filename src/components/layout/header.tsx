@@ -34,7 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { useSession } from "@/lib/auth-client";
+import { useSession, signOut } from "@/lib/auth-client";
 
 interface HeaderProps {
   user?: {
@@ -309,14 +309,18 @@ function Header({ user }: HeaderProps) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="/auth/signout"
-                    className="flex items-center w-full"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Log out
-                  </Link>
+                <DropdownMenuItem
+                  onSelect={async (e) => {
+                    e.preventDefault();
+                    try {
+                      await signOut();
+                    } catch (err) {
+                      console.error("Sign out failed", err);
+                    }
+                  }}
+                  className="cursor-pointer"
+                >
+                  <LogOut className="mr-2 h-4 w-4" /> Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
