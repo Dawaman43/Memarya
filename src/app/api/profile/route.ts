@@ -9,6 +9,9 @@ type PatchBody = {
   image?: string; // direct URL, e.g., from DiceBear
   avatarStyle?: string; // optional: e.g., "fun-emoji"
   avatarSeed?: string; // optional: e.g., user name
+  bio?: string;
+  location?: string;
+  links?: string[] | { label?: string; url: string }[];
 };
 
 async function getSessionUser(req: NextRequest) {
@@ -44,12 +47,40 @@ export async function PATCH(req: NextRequest) {
       nextImage = `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
     }
 
-    const updates: { name?: string; image?: string | null } = {};
+    const updates: {
+      name?: string;
+      image?: string | null;
+      bio?: string | null;
+      location?: string | null;
+      links?: string | null;
+    } = {};
     if (typeof body.name === "string" && body.name.trim().length) {
       updates.name = body.name.trim();
     }
     if (typeof nextImage === "string" && nextImage.length) {
       updates.image = nextImage;
+    }
+    if (typeof body.bio === "string") {
+      updates.bio = body.bio.trim() || null;
+    }
+    if (typeof body.location === "string") {
+      updates.location = body.location.trim() || null;
+    }
+    if (Array.isArray(body.links)) {
+      try {
+        const normalized = body.links
+          .map((l) => {
+            if (!l) return null;
+            if (typeof l === "string") return { url: l };
+            if (typeof l.url === "string" && l.url.trim())
+              return { label: l.label?.trim() || undefined, url: l.url.trim() };
+            return null;
+          })
+          .filter(Boolean);
+        updates.links = JSON.stringify(normalized);
+      } catch {
+        // ignore malformed links
+      }
     }
 
     if (!Object.keys(updates).length) {
