@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 export async function middleware(req: NextRequest) {
   // Avoid importing server-only modules (pg/drizzle) in Edge runtime.
   // Instead, call the Next API route handled by better-auth to get the session.
-  const apiUrl = new URL("/api/auth/session", req.url);
+  // better-auth exposes `get-session` (seen 200 in logs); `session` returns 404
+  const apiUrl = new URL("/api/auth/get-session", req.url);
   const res = await fetch(apiUrl, {
     headers: { cookie: req.headers.get("cookie") ?? "" },
     cache: "no-store",
