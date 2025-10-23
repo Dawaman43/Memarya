@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
+import { headers as nextHeaders } from "next/headers";
 import {
   Geist,
   Geist_Mono,
@@ -86,7 +86,9 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   // SSR: get session to avoid client pop-in
-  const session = await auth.api.getSession({ headers: headers() });
+  const session = await auth.api.getSession({
+    headers: new Headers(nextHeaders()),
+  });
   const user = session?.user as
     | { name: string; email: string; image?: string }
     | undefined;

@@ -1,26 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "./lib/auth";
 
-async function middleware(req: NextRequest) {
-  const session = await auth.api.getSession({
-    headers: req.headers,
-  });
+export async function middleware(req: NextRequest) {
+  const session = await auth.api.getSession({ headers: req.headers });
 
-  const { pathname } = req.nextUrl;
-
-  const protectedPaths = ["/dashboard", "/profile", "/settings", "/"];
-
-  const isProtected = protectedPaths.some((path) => pathname.startsWith(path));
-
-  if (isProtected && !session?.user) {
+  // Middleware runs only on matched routes (see matcher below)
+  if (!session?.user) {
     const loginUrl = new URL("/auth", req.url);
+    loginUrl.searchParams.set(
+      "redirect",
+      req.nextUrl.pathname + req.nextUrl.search
+    );
     return NextResponse.redirect(loginUrl);
   }
+
   return NextResponse.next();
 }
 
-export default middleware;
-
 export const config = {
+  // Protect only these routes; add more patterns as needed
   matcher: ["/dashboard/:path*", "/profile/:path*", "/settings/:path*"],
 };
