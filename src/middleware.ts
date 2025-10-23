@@ -10,6 +10,7 @@ async function middleware(req: NextRequest) {
 
   const protectedPaths = ["/dashboard", "/profile", "/settings"];
 
+  const isProtected = protectedPaths.some((path) => pathname.startsWith(path));
   return NextResponse.next();
 }
 
