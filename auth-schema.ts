@@ -6,6 +6,8 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
+  // simple role-based access control
+  role: text("role").default("user").notNull(),
   // Additional profile fields
   bio: text("bio"),
   location: text("location"),

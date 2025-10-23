@@ -49,8 +49,12 @@ function Header({ user }: HeaderProps) {
   // Live session from better-auth (client)
   const router = useRouter();
   const { data: session } = useSession();
-  const sessionUser = (session as any)?.user as
-    | { name?: string; email?: string; image?: string }
+  const sessionUser = (
+    session as unknown as {
+      user?: { name?: string; email?: string; image?: string; role?: string };
+    }
+  )?.user as
+    | { name?: string; email?: string; image?: string; role?: string }
     | undefined;
 
   // Prefer live session user over prop; prop can be used for SSR fallback
@@ -236,6 +240,19 @@ function Header({ user }: HeaderProps) {
               aria-label="Search courses"
             />
           </div>
+
+          {/* Quick Links */}
+          <Button variant="ghost" asChild className="hidden md:inline-flex">
+            <Link href="/courses">Courses</Link>
+          </Button>
+          <Button variant="ghost" asChild className="hidden md:inline-flex">
+            <Link href="/ide">IDE</Link>
+          </Button>
+          {sessionUser?.role === "admin" && (
+            <Button variant="outline" asChild className="hidden md:inline-flex">
+              <Link href="/admin/courses">Admin</Link>
+            </Button>
+          )}
 
           {/* Notifications */}
           <Button

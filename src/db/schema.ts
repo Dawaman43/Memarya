@@ -1,12 +1,11 @@
-import { integer, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
-
-export const usersTable = pgTable("users", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  name: varchar({ length: 256 }).notNull(),
-  email: varchar({ length: 256 }).notNull().unique(),
-  passwordHash: varchar({ length: 512 }).notNull(),
-  createdAt: timestamp().defaultNow(),
-});
+import {
+  integer,
+  pgTable,
+  timestamp,
+  varchar,
+  text,
+} from "drizzle-orm/pg-core";
+import { user as authUser } from "../../auth-schema";
 
 export const coursesTable = pgTable("courses", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
@@ -31,9 +30,9 @@ export const lessonsTable = pgTable("lessons", {
 
 export const enrollmentsTable = pgTable("enrollments", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  userId: integer()
+  userId: text()
     .notNull()
-    .references(() => usersTable.id),
+    .references(() => authUser.id),
   courseId: integer()
     .notNull()
     .references(() => coursesTable.id),
@@ -55,8 +54,8 @@ export const progressTable = pgTable("progress", {
 
 export const certificatesTable = pgTable("certificates", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  userId: integer()
-    .references(() => usersTable.id)
+  userId: text()
+    .references(() => authUser.id)
     .notNull(),
   courseId: integer()
     .references(() => coursesTable.id)

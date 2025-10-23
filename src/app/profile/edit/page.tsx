@@ -92,11 +92,18 @@ export default function EditProfilePage() {
             setBio(u.bio || "");
             setLocation(u.location || "");
             try {
-              const parsed = u.links ? JSON.parse(u.links) : [];
+              const parsed = u.links ? JSON.parse(u.links) : ([] as unknown);
               if (Array.isArray(parsed)) {
-                const urls = parsed
-                  .map((x: any) => (typeof x === "string" ? x : x?.url))
-                  .filter((x: any) => typeof x === "string") as string[];
+                const urls = (parsed as unknown[])
+                  .map((x) => {
+                    if (typeof x === "string") return x;
+                    if (x && typeof x === "object" && "url" in x) {
+                      const url = (x as { url?: unknown }).url;
+                      return typeof url === "string" ? url : undefined;
+                    }
+                    return undefined;
+                  })
+                  .filter((x): x is string => typeof x === "string");
                 setLinks(urls.length ? urls : [""]);
               }
             } catch {}
@@ -158,7 +165,7 @@ export default function EditProfilePage() {
       // Optimistic: refresh current route and profile page
       router.refresh();
       router.push("/profile");
-    } catch (e) {
+    } catch {
       toast.error("Could not update profile");
     }
   }

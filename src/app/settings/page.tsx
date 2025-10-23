@@ -52,8 +52,9 @@ export default function SettingsPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || "Failed");
       toast.success("Email updated. Please verify your new address.");
-    } catch (e: any) {
-      toast.error(e?.message || "Could not update email");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error(msg || "Could not update email");
     } finally {
       setLoading(false);
     }

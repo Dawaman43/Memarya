@@ -13,10 +13,20 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+type Profile = {
+  id?: string;
+  name?: string;
+  email?: string;
+  image?: string;
+  bio?: string | null;
+  location?: string | null;
+  links?: string | null; // JSON string
+};
+
 function ProfilePage() {
   const { data: session } = useSession();
   const user = session?.user;
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
     fetch("/api/profile")
@@ -99,28 +109,45 @@ function ProfilePage() {
               <ul className="list-disc pl-6 text-sm">
                 {(() => {
                   try {
-                    const parsed = JSON.parse(profile.links);
-                    return Array.isArray(parsed) ? parsed : [];
+                    const parsed = profile.links
+                      ? JSON.parse(profile.links)
+                      : ([] as unknown);
+                    const arr = Array.isArray(parsed)
+                      ? (parsed as unknown[])
+                      : [];
+                    return arr
+                      .map((l) => {
+                        if (typeof l === "string") {
+                          return { href: l, label: l };
+                        }
+                        if (l && typeof l === "object") {
+                          const href = (l as { url?: unknown }).url;
+                          const label = (l as { label?: unknown }).label;
+                          if (typeof href === "string") {
+                            return {
+                              href,
+                              label: typeof label === "string" ? label : href,
+                            };
+                          }
+                        }
+                        return null;
+                      })
+                      .filter((x): x is { href: string; label: string } => !!x);
                   } catch {
-                    return [];
+                    return [] as { href: string; label: string }[];
                   }
-                })().map((l: any, idx: number) => {
-                  const href = typeof l === "string" ? l : l?.url;
-                  const label = typeof l === "string" ? l : l?.label || l?.url;
-                  if (!href) return null;
-                  return (
-                    <li key={idx}>
-                      <a
-                        className="text-primary hover:underline"
-                        href={href}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {label}
-                      </a>
-                    </li>
-                  );
-                })}
+                })().map((l, idx: number) => (
+                  <li key={idx}>
+                    <a
+                      className="text-primary hover:underline"
+                      href={l.href}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {l.label}
+                    </a>
+                  </li>
+                ))}
               </ul>
             </div>
           )}

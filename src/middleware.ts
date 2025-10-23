@@ -11,10 +11,12 @@ export async function middleware(req: NextRequest) {
   });
 
   let hasUser = false;
+  let role: string | null = null;
   if (res.ok) {
     try {
       const data = await res.json();
       hasUser = !!data?.user;
+      role = data?.user?.role ?? null;
     } catch {
       hasUser = false;
     }
@@ -30,10 +32,30 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // Admin-only protection
+  if (req.nextUrl.pathname.startsWith("/admin")) {
+    if (!hasUser) {
+      const loginUrl = new URL("/auth", req.url);
+      loginUrl.searchParams.set(
+        "redirect",
+        req.nextUrl.pathname + req.nextUrl.search
+      );
+      return NextResponse.redirect(loginUrl);
+    }
+    if (role !== "admin") {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
   // Protect only these routes; add more patterns as needed
-  matcher: ["/dashboard/:path*", "/profile/:path*", "/settings/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/profile/:path*",
+    "/settings/:path*",
+    "/admin/:path*",
+  ],
 };
