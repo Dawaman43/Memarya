@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Menu,
   Search,
@@ -46,6 +47,7 @@ interface HeaderProps {
 
 function Header({ user }: HeaderProps) {
   // Live session from better-auth (client)
+  const router = useRouter();
   const { data: session } = useSession();
   const sessionUser = (session as any)?.user as
     | { name?: string; email?: string; image?: string }
@@ -314,6 +316,7 @@ function Header({ user }: HeaderProps) {
                     e.preventDefault();
                     try {
                       await signOut();
+                      router.push("/auth");
                     } catch (err) {
                       console.error("Sign out failed", err);
                     }
