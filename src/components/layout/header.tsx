@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { useSession } from "@/lib/auth-client";
 
 interface HeaderProps {
   user?: {
@@ -44,13 +45,24 @@ interface HeaderProps {
 }
 
 function Header({ user }: HeaderProps) {
-  const userInitial = user?.name?.charAt(0)?.toUpperCase() || "U";
+  // Live session from better-auth (client)
+  const { data: session } = useSession();
+  const sessionUser = (session as any)?.user as
+    | { name?: string; email?: string; image?: string }
+    | undefined;
+
+  // Prefer live session user over prop; prop can be used for SSR fallback
+  const currentUser = user ?? sessionUser;
+  const userInitial =
+    currentUser?.name?.charAt(0)?.toUpperCase() ||
+    currentUser?.email?.charAt(0)?.toUpperCase() ||
+    "U";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
         {/* Left: Logo */}
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <Link
             href="/"
             className="group flex items-center gap-2 hover:opacity-90 transition-all duration-300 hover:scale-105"
@@ -212,7 +224,7 @@ function Header({ user }: HeaderProps) {
         </div>
 
         {/* Right: Search, Actions, Profile, Mobile Menu */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           {/* Search */}
           <div className="relative hidden lg:block">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2" />
@@ -237,7 +249,7 @@ function Header({ user }: HeaderProps) {
           <ThemeToggle />
 
           {/* CTA Button or Profile */}
-          {!user ? (
+          {!currentUser ? (
             <Button
               asChild
               size="sm"
@@ -254,7 +266,10 @@ function Header({ user }: HeaderProps) {
                   className="relative h-9 w-9 rounded-lg transition-colors"
                 >
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={user.image} alt={user.name} />
+                    <AvatarImage
+                      src={currentUser.image}
+                      alt={currentUser.name || "User"}
+                    />
                     <AvatarFallback className="font-semibold">
                       {userInitial}
                     </AvatarFallback>
@@ -269,9 +284,9 @@ function Header({ user }: HeaderProps) {
                 <DropdownMenuLabel className="font-normal px-4 py-3">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
-                      {user.name}
+                      {currentUser?.name}
                     </p>
-                    <p className="text-xs leading-none">{user.email}</p>
+                    <p className="text-xs leading-none">{currentUser?.email}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -369,7 +384,7 @@ function Header({ user }: HeaderProps) {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              {user ? (
+              {currentUser ? (
                 <DropdownMenuItem asChild>
                   <Link
                     href="/dashboard"
