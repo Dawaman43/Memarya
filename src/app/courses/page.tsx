@@ -19,7 +19,7 @@ export default function CoursesPage() {
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
   const router = useRouter();
-  const category = searchParams.get("category") ?? "all";
+  const category = searchParams?.get("category") ?? "all";
 
   useEffect(() => {
     (async () => {
