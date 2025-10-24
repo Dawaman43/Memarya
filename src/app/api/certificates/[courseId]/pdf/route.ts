@@ -1,8 +1,14 @@
 import { NextRequest } from "next/server";
 import { db } from "@/db";
-import { certificatesTable, coursesTable, enrollmentsTable } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
-import PDFDocument from "pdfkit";
+import {
+  certificatesTable,
+  coursesTable,
+  enrollmentsTable,
+  quizResultsTable,
+  quizzesTable,
+} from "@/db/schema";
+import { and, desc, eq } from "drizzle-orm";
+// Note: Import PDFKit dynamically inside the handler to avoid Turbopack bundling issues
 
 export const runtime = "nodejs";
 
@@ -25,6 +31,9 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ courseId: string }> }
 ) {
+  // Dynamically import pdfkit to avoid build errors with @swc/helpers in Turbopack
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const PDFDocument = (await import("pdfkit")).default as any;
   const user = await getSessionUser(req);
   if (!user)
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -56,6 +65,31 @@ export async function GET(
     return new Response(JSON.stringify({ error: "Course not completed" }), {
       status: 400,
     });
+
+  // Require a passed quiz result (>= 80) if a quiz exists for this course
+  const [quiz] = await db
+    .select()
+    .from(quizzesTable)
+    .where(eq(quizzesTable.courseId, courseId));
+  if (quiz) {
+    const results = await db
+      .select()
+      .from(quizResultsTable)
+      .where(
+        and(
+          eq(quizResultsTable.userId, user.id),
+          eq(quizResultsTable.courseId, courseId),
+          eq(quizResultsTable.quizId, quiz.id)
+        )
+      )
+      .orderBy(desc(quizResultsTable.submittedAt));
+    if (!results.length || !results[0].passed || (results[0].score ?? 0) < 80) {
+      return new Response(
+        JSON.stringify({ error: "Quiz requirement not met (>= 80% required)" }),
+        { status: 400 }
+      );
+    }
+  }
 
   // Get course details
   const [course] = await db
@@ -89,7 +123,7 @@ export async function GET(
   const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margin: 50 });
     const chunks: Buffer[] = [];
-    doc.on("data", (chunk) => chunks.push(chunk as Buffer));
+    doc.on("data", (chunk: any) => chunks.push(chunk as Buffer));
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
@@ -181,7 +215,7 @@ export async function GET(
   });
 
   const filename = `certificate-course-${courseId}.pdf`;
-  return new Response(pdfBuffer, {
+  return new Response(new Uint8Array(pdfBuffer), {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",

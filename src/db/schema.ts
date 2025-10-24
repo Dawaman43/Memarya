@@ -80,3 +80,50 @@ export const snippetsTable = pgTable("snippets", {
   createdAt: timestamp().defaultNow(),
   updatedAt: timestamp().defaultNow(),
 });
+
+// Flashcards per course
+export const flashcardsTable = pgTable("flashcards", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  courseId: integer()
+    .notNull()
+    .references(() => coursesTable.id),
+  front: varchar({ length: 1024 }).notNull(),
+  back: varchar({ length: 2048 }).notNull(),
+  createdAt: timestamp().defaultNow(),
+});
+
+// One quiz per course (simplified)
+export const quizzesTable = pgTable("quizzes", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  courseId: integer()
+    .notNull()
+    .references(() => coursesTable.id),
+  title: varchar({ length: 256 }),
+  createdAt: timestamp().defaultNow(),
+});
+
+export const quizQuestionsTable = pgTable("quiz_questions", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  quizId: integer()
+    .notNull()
+    .references(() => quizzesTable.id),
+  question: varchar({ length: 1024 }).notNull(),
+  optionsJson: text().notNull(), // JSON array of strings
+  answerIndex: integer().notNull(),
+});
+
+export const quizResultsTable = pgTable("quiz_results", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  userId: text()
+    .notNull()
+    .references(() => authUser.id),
+  courseId: integer()
+    .notNull()
+    .references(() => coursesTable.id),
+  quizId: integer()
+    .notNull()
+    .references(() => quizzesTable.id),
+  score: integer().notNull(),
+  passed: boolean().default(false).notNull(),
+  submittedAt: timestamp().defaultNow(),
+});

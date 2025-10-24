@@ -2,9 +2,19 @@
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
-export default function MarkCompleteButton({ lessonId }: { lessonId: number }) {
+// Define props interface to include className
+interface MarkCompleteButtonProps {
+  lessonId: number;
+  className?: string; // Optional className prop
+}
+
+export default function MarkCompleteButton({
+  lessonId,
+  className,
+}: MarkCompleteButtonProps) {
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
+
   return (
     <Button
       disabled={saving || done}
@@ -21,6 +31,7 @@ export default function MarkCompleteButton({ lessonId }: { lessonId: number }) {
           setSaving(false);
         }
       }}
+      className={className} // Pass className to Button
     >
       {done ? "Completed" : saving ? "Saving…" : "Mark complete"}
     </Button>

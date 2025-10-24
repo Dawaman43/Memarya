@@ -15,16 +15,45 @@ export default function NewCoursePage() {
   const [category, setCategory] = useState("General");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [urlWarning, setUrlWarning] = useState<string | null>(null);
+
+  // Validate YouTube URLs in description
+  const validateDescription = (value: string) => {
+    const watchUrlRegex =
+      /https:\/\/www\.youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/g;
+    if (watchUrlRegex.test(value)) {
+      setUrlWarning(
+        "YouTube watch URLs (e.g., /watch?v=VIDEO_ID) are not embeddable. Use embed URLs (e.g., /embed/VIDEO_ID) or convert them automatically on save."
+      );
+    } else {
+      setUrlWarning(null);
+    }
+    setDescription(value);
+  };
+
+  // Convert YouTube watch URLs to embed URLs before submission
+  const convertYouTubeUrls = (text: string): string => {
+    const watchUrlRegex =
+      /https:\/\/www\.youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/g;
+    return text.replace(watchUrlRegex, "https://www.youtube.com/embed/$1");
+  };
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
     try {
+      // Convert YouTube URLs in description before sending
+      const sanitizedDescription = convertYouTubeUrls(description);
       const res = await fetch("/api/admin/courses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, description, thumbnailUrl, category }),
+        body: JSON.stringify({
+          title,
+          description: sanitizedDescription,
+          thumbnailUrl,
+          category,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed to create");
@@ -59,8 +88,12 @@ export default function NewCoursePage() {
               <Textarea
                 id="description"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) => validateDescription(e.target.value)}
+                placeholder="Enter course description. Use YouTube embed URLs for videos (e.g., https://www.youtube.com/embed/VIDEO_ID)."
               />
+              {urlWarning && (
+                <p className="text-sm text-yellow-600">{urlWarning}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="thumb">Thumbnail URL</Label>
