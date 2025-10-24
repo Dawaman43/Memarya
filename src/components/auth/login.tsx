@@ -39,9 +39,11 @@ function Login() {
   const onSubmit = async (data: LoginData) => {
     try {
       setLoading(true);
+      const email = data.email.trim().toLowerCase();
+      const password = data.password;
       const { data: resData, error: resError } = await authClient.signIn.email({
-        email: data.email,
-        password: data.password,
+        email,
+        password,
       });
 
       if (resError) {

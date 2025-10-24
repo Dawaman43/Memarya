@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   try {
     const body = await req.json();
-    const { title, description, thumbnailUrl } = body ?? {};
+    const { title, description, thumbnailUrl, category } = body ?? {};
     if (!title || typeof title !== "string")
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
 
@@ -46,6 +46,10 @@ export async function POST(req: NextRequest) {
         title,
         description: description ?? null,
         thumbnailUrl: thumbnailUrl ?? null,
+        category:
+          typeof category === "string" && category.trim()
+            ? category.trim().slice(0, 64)
+            : "General",
       })
       .returning();
 

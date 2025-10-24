@@ -56,13 +56,21 @@ export async function PUT(
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   try {
     const body = await req.json();
-    const { title, description, thumbnailUrl } = body ?? {};
+    const { title, description, thumbnailUrl, category } = body ?? {};
     const [updated] = await db
       .update(coursesTable)
       .set({
         ...(title ? { title } : {}),
         ...(description !== undefined ? { description } : {}),
         ...(thumbnailUrl !== undefined ? { thumbnailUrl } : {}),
+        ...(category !== undefined
+          ? {
+              category:
+                typeof category === "string" && category.trim()
+                  ? category.trim().slice(0, 64)
+                  : "General",
+            }
+          : {}),
       })
       .where(eq(coursesTable.id, id))
       .returning();

@@ -12,6 +12,7 @@ export default function NewCoursePage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [category, setCategory] = useState("General");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +24,7 @@ export default function NewCoursePage() {
       const res = await fetch("/api/admin/courses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, description, thumbnailUrl }),
+        body: JSON.stringify({ title, description, thumbnailUrl, category }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed to create");
@@ -67,6 +68,15 @@ export default function NewCoursePage() {
                 id="thumb"
                 value={thumbnailUrl}
                 onChange={(e) => setThumbnailUrl(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Input
+                id="category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="e.g., Web Development, DSA, Cloud"
               />
             </div>
             {error && <p className="text-sm text-red-600">{error}</p>}

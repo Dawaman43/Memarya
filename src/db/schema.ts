@@ -4,6 +4,7 @@ import {
   timestamp,
   varchar,
   text,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { user as authUser } from "../../auth-schema";
 
@@ -11,7 +12,8 @@ export const coursesTable = pgTable("courses", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   title: varchar({ length: 256 }).notNull(),
   description: varchar({ length: 2048 }),
-  thumbnailUrl: varchar({ length: 512 }),
+  thumbnailUrl: text(),
+  category: varchar({ length: 64 }).default("General").notNull(),
   createdAt: timestamp().defaultNow(),
 });
 
@@ -62,4 +64,19 @@ export const certificatesTable = pgTable("certificates", {
     .notNull(),
   issuedAt: timestamp().defaultNow(),
   certificateUrl: varchar({ length: 512 }),
+});
+
+export const snippetsTable = pgTable("snippets", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  userId: text()
+    .notNull()
+    .references(() => authUser.id),
+  title: varchar({ length: 256 }),
+  language: varchar({ length: 64 }).notNull(),
+  version: varchar({ length: 64 }),
+  files: text().notNull(),
+  isPublic: boolean().default(false).notNull(),
+  shareId: varchar({ length: 64 }),
+  createdAt: timestamp().defaultNow(),
+  updatedAt: timestamp().defaultNow(),
 });

@@ -1,6 +1,8 @@
 import { db } from "@/db";
 import { coursesTable, lessonsTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import ReactMarkdown from "react-markdown";
+import MarkCompleteButton from "@/components/learn/mark-complete-button";
 
 export default async function LessonPage({
   params,
@@ -34,13 +36,34 @@ export default async function LessonPage({
         <p className="text-sm text-muted-foreground">Lesson: {lesson.title}</p>
       </div>
       {lesson.videoUrl && (
-        <div className="aspect-video bg-black/10 rounded-md">
-          {/* Video embed could go here */}
+        <div className="aspect-video bg-black/10 rounded-md overflow-hidden">
+          {/* Simple built-in player: HTML5 video for direct links; iframe for YouTube */}
+          {/(youtube\.com|youtu\.be|vimeo\.com)/i.test(lesson.videoUrl) ? (
+            <iframe
+              src={
+                lesson.videoUrl.includes("watch?v=")
+                  ? lesson.videoUrl.replace("watch?v=", "embed/")
+                  : lesson.videoUrl
+              }
+              className="w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              title="Lesson video"
+            />
+          ) : (
+            <video className="w-full h-full" controls preload="metadata">
+              <source src={lesson.videoUrl} />
+              Your browser does not support the video tag.
+            </video>
+          )}
         </div>
       )}
-      <article className="prose dark:prose-invert max-w-none whitespace-pre-wrap">
-        {lesson.content}
+      <article className="prose dark:prose-invert max-w-none">
+        <ReactMarkdown>{lesson.content}</ReactMarkdown>
       </article>
+      <div>
+        <MarkCompleteButton lessonId={lesson.id} />
+      </div>
     </div>
   );
 }

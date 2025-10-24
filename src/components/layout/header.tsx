@@ -36,6 +36,7 @@ import {
 } from "../ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { useSession, signOut } from "@/lib/auth-client";
+import { useEffect, useState } from "react";
 
 interface HeaderProps {
   user?: {
@@ -63,6 +64,24 @@ function Header({ user }: HeaderProps) {
     currentUser?.name?.charAt(0)?.toUpperCase() ||
     currentUser?.email?.charAt(0)?.toUpperCase() ||
     "U";
+
+  // Dynamic course categories for Explore
+  const [categories, setCategories] = useState<
+    { category: string; count: number }[]
+  >([]);
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/courses/categories", {
+          cache: "no-store",
+        });
+        const data = await res.json();
+        setCategories(data.categories || []);
+      } catch (e) {
+        // swallow
+      }
+    })();
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b backdrop-blur-xl">
@@ -101,6 +120,32 @@ function Header({ user }: HeaderProps) {
                   </NavigationMenuTrigger>
                   <NavigationMenuContent className="data-[motion^=from-]:anim-[enter-from-left_0.4s_cubic-bezier(0.4,0,0.2,1)] data-[motion^=from-]:sm:anim-[enter-from-right_0.4s_cubic-bezier(0.4,0,0.2,1)] backdrop-blur-xl border rounded-xl shadow-lg left-1/2 -translate-x-1/2">
                     <ul className="grid w-[600px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                      {categories.slice(0, 6).map((c) => (
+                        <li key={c.category}>
+                          <NavigationMenuLink asChild>
+                            <Link
+                              href={`/courses?category=${encodeURIComponent(
+                                c.category
+                              )}`}
+                              className="group block select-none space-y-1 rounded-lg p-3 leading-none no-underline outline-none transition-colors"
+                            >
+                              <div className="space-y-1">
+                                <p className="text-sm font-medium leading-none">
+                                  {c.category}
+                                </p>
+                                <p className="line-clamp-2 text-sm text-muted-foreground">
+                                  {c.count} course{c.count === 1 ? "" : "s"}
+                                </p>
+                              </div>
+                            </Link>
+                          </NavigationMenuLink>
+                        </li>
+                      ))}
+                      {!categories.length && (
+                        <li className="col-span-2 text-sm text-muted-foreground px-3">
+                          Browse featured areas below
+                        </li>
+                      )}
                       <li>
                         <NavigationMenuLink asChild>
                           <Link

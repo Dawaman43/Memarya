@@ -20,6 +20,9 @@ export default function SettingsPage() {
   const user = session?.user;
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [savingPass, setSavingPass] = useState(false);
 
   useEffect(() => {
     if (user?.email) setEmail(user.email);
@@ -60,6 +63,31 @@ export default function SettingsPage() {
     }
   }
 
+  async function onSavePassword() {
+    if (!oldPassword || !newPassword || newPassword.length < 8) {
+      toast.error("Enter your current password and a new one (min 8 chars)");
+      return;
+    }
+    setSavingPass(true);
+    try {
+      const res = await fetch("/api/settings/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ oldPassword, newPassword }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "Failed");
+      toast.success("Password updated");
+      setOldPassword("");
+      setNewPassword("");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error(msg);
+    } finally {
+      setSavingPass(false);
+    }
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
@@ -89,6 +117,37 @@ export default function SettingsPage() {
         <CardFooter>
           <Button disabled={loading} onClick={onSaveEmail}>
             {loading ? "Saving..." : "Save Email"}
+          </Button>
+        </CardFooter>
+      </Card>
+      <Card className="max-w-xl mt-6">
+        <CardHeader>
+          <CardTitle>Password</CardTitle>
+          <CardDescription>Update your account password.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="space-y-2">
+            <Label htmlFor="old">Current password</Label>
+            <Input
+              id="old"
+              type="password"
+              value={oldPassword}
+              onChange={(e) => setOldPassword(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="new">New password</Label>
+            <Input
+              id="new"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button disabled={savingPass} onClick={onSavePassword}>
+            {savingPass ? "Updating..." : "Update Password"}
           </Button>
         </CardFooter>
       </Card>
