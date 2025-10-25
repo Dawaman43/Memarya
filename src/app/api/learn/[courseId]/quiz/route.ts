@@ -37,7 +37,7 @@ export async function GET(
     id: r.id,
     question: r.question,
     options: JSON.parse(r.optionsJson || "[]"),
-    answerIndex: r.answerIndex,
+    // Don't include answerIndex for learners
   }));
 
   return NextResponse.json({

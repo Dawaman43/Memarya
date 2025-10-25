@@ -23,25 +23,7 @@ import {
 import DOMPurify from "dompurify";
 import { Badge } from "@/components/ui/badge";
 import toast from "react-hot-toast";
-
-type Lesson = {
-  id: number;
-  title: string;
-  videoId?: string;
-  videoUrl?: string;
-  duration?: number;
-  completed?: boolean;
-  description?: string;
-};
-type Course = {
-  id: number;
-  title: string;
-  description: string | null;
-  thumbnailUrl?: string;
-  category?: string;
-  duration?: number;
-  progress?: number;
-};
+import { Lesson, Course } from "@/types";
 
 const CustomVideoPlayer = ({
   videoId,

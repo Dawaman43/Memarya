@@ -23,6 +23,8 @@ import TerminalExercise from "@/components/learn/TerminalExercise";
 import IDEExercise from "@/components/learn/IDEExercise";
 import { TextContent } from "@/components/learn/TextContent";
 import { VideoContent } from "@/components/learn/VideoContent";
+import { QuizComponent } from "@/components/learn/QuizComponent";
+import { Lesson, Course } from "@/types";
 
 // Utility function to convert YouTube URLs to embed format
 const getEmbedUrl = (url: string | undefined): string => {
@@ -148,24 +150,6 @@ function ErrorState({ message }: { message: string }) {
   );
 }
 
-type Course = {
-  id: number;
-  title: string;
-  thumbnailUrl?: string | null;
-};
-
-type Lesson = {
-  id: number;
-  courseId: number;
-  title: string;
-  content?: string | null;
-  videoUrl?: string | null;
-  videoId?: string | null;
-  duration?: number | null;
-  thumbnailUrl?: string | null;
-  completed?: boolean | null;
-};
-
 export default function LessonPage() {
   const params = useParams<{ courseId: string; lessonId: string }>();
   const router = useRouter();
@@ -187,6 +171,7 @@ export default function LessonPage() {
     score?: number;
     passingScore?: number;
   }>({ hasQuiz: false, passed: false });
+  const [components, setComponents] = useState<any[] | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined" && lessonId) {
@@ -420,13 +405,19 @@ export default function LessonPage() {
                         </div>
                         <div className="flex gap-2">
                           {c.type === "quiz" && (
-                            <Button asChild size="sm">
-                              <Link
-                                href={`/learn/${courseId}/${lessonId}/quiz`}
-                              >
-                                Start Quiz
-                              </Link>
-                            </Button>
+                            <QuizComponent
+                              courseId={courseId}
+                              lessonId={lessonId}
+                              onComplete={(score, passed) => {
+                                if (passed) {
+                                  toast.success(`Quiz passed with ${score}%!`);
+                                } else {
+                                  toast.error(
+                                    `Quiz failed with ${score}%. Try again.`
+                                  );
+                                }
+                              }}
+                            />
                           )}
                           {c.type === "flashcards" && (
                             <Button asChild size="sm">

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { quizResultsTable } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 async function getSessionUser(req: NextRequest) {
   const url = new URL("/api/auth/get-session", req.url);
@@ -37,7 +37,12 @@ export async function GET(
     const results = await db
       .select()
       .from(quizResultsTable)
-      .where(eq(quizResultsTable.userId, user.id))
+      .where(
+        and(
+          eq(quizResultsTable.userId, user.id),
+          eq(quizResultsTable.courseId, courseId)
+        )
+      )
       .orderBy(quizResultsTable.submittedAt);
 
     return NextResponse.json({ results });

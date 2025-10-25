@@ -136,6 +136,12 @@ export default function EditCoursePage() {
   const [newFlashcardFront, setNewFlashcardFront] = useState("");
   const [newFlashcardBack, setNewFlashcardBack] = useState("");
   const [showFlashcards, setShowFlashcards] = useState(false);
+  const [quiz, setQuiz] = useState<any>(null);
+  const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [newQuestion, setNewQuestion] = useState("");
+  const [newOptions, setNewOptions] = useState(["", "", "", ""]);
+  const [newAnswerIndex, setNewAnswerIndex] = useState(0);
 
   useEffect(() => {
     (async () => {
@@ -168,9 +174,19 @@ export default function EditCoursePage() {
     if (res.ok) setFlashcards(data.flashcards || []);
   }
 
+  async function reloadQuiz() {
+    const res = await fetch(`/api/admin/courses/${id}/quiz`);
+    const data = await res.json();
+    if (res.ok) {
+      setQuiz(data.quiz || null);
+      setQuizQuestions(data.questions || []);
+    }
+  }
+
   useEffect(() => {
     reloadLessons();
     reloadFlashcards();
+    reloadQuiz();
   }, [id]);
 
   async function onSave(e: React.FormEvent) {
@@ -515,6 +531,180 @@ export default function EditCoursePage() {
                     </p>
                   )}
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* Quiz Management */}
+          <div className="mt-8 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Quiz</h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowQuiz(!showQuiz)}
+              >
+                {showQuiz ? "Hide" : "Manage"} ({quizQuestions.length}{" "}
+                questions)
+              </Button>
+            </div>
+
+            {showQuiz && (
+              <div className="border rounded-md p-4 space-y-4">
+                {/* Create quiz if it doesn't exist */}
+                {!quiz && (
+                  <div className="border rounded p-3 bg-blue-50 dark:bg-blue-900/20">
+                    <p className="text-sm mb-2">
+                      No quiz exists for this course yet.
+                    </p>
+                    <Button
+                      size="sm"
+                      onClick={async () => {
+                        const res = await fetch(
+                          `/api/admin/courses/${id}/quiz`,
+                          {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ title: `${title} Quiz` }),
+                          }
+                        );
+                        if (res.ok) reloadQuiz();
+                      }}
+                    >
+                      Create Quiz
+                    </Button>
+                  </div>
+                )}
+
+                {quiz && (
+                  <>
+                    {/* Add new question */}
+                    <div className="space-y-3 border rounded p-3">
+                      <h3 className="font-medium">Add New Question</h3>
+                      <Textarea
+                        placeholder="Question text"
+                        value={newQuestion}
+                        onChange={(e) => setNewQuestion(e.target.value)}
+                        rows={2}
+                      />
+                      <div className="space-y-2">
+                        <Label>Answer Options:</Label>
+                        {newOptions.map((option, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              name="correct-answer"
+                              checked={newAnswerIndex === index}
+                              onChange={() => setNewAnswerIndex(index)}
+                              className="w-4 h-4"
+                            />
+                            <Input
+                              placeholder={`Option ${index + 1}`}
+                              value={option}
+                              onChange={(e) => {
+                                const updated = [...newOptions];
+                                updated[index] = e.target.value;
+                                setNewOptions(updated);
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      <Button
+                        onClick={async () => {
+                          if (
+                            !newQuestion.trim() ||
+                            newOptions.some((opt) => !opt.trim())
+                          )
+                            return;
+                          const res = await fetch(
+                            `/api/admin/courses/${id}/quiz/questions`,
+                            {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                question: newQuestion.trim(),
+                                optionsJson: JSON.stringify(
+                                  newOptions.map((opt) => opt.trim())
+                                ),
+                                answerIndex: newAnswerIndex,
+                              }),
+                            }
+                          );
+                          if (res.ok) {
+                            setNewQuestion("");
+                            setNewOptions(["", "", "", ""]);
+                            setNewAnswerIndex(0);
+                            reloadQuiz();
+                          }
+                        }}
+                      >
+                        Add Question
+                      </Button>
+                    </div>
+
+                    {/* Existing questions */}
+                    <div className="space-y-2">
+                      <h3 className="font-medium">
+                        Questions ({quizQuestions.length})
+                      </h3>
+                      {quizQuestions.length > 0 ? (
+                        quizQuestions.map((q) => (
+                          <div
+                            key={q.id}
+                            className="border rounded p-3 flex items-start justify-between gap-3"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm mb-2">
+                                {q.question}
+                              </div>
+                              <div className="space-y-1">
+                                {JSON.parse(q.optionsJson).map(
+                                  (option: string, index: number) => (
+                                    <div
+                                      key={index}
+                                      className={`text-sm p-1 rounded ${
+                                        index === q.answerIndex
+                                          ? "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200"
+                                          : "bg-gray-50 dark:bg-gray-800"
+                                      }`}
+                                    >
+                                      {index === q.answerIndex && "✓ "}
+                                      {option}
+                                    </div>
+                                  )
+                                )}
+                              </div>
+                            </div>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={async () => {
+                                const res = await fetch(
+                                  `/api/admin/courses/${id}/quiz/questions`,
+                                  {
+                                    method: "DELETE",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({ id: q.id }),
+                                  }
+                                );
+                                if (res.ok) reloadQuiz();
+                              }}
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                          No questions yet. Add some above!
+                        </p>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
