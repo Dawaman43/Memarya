@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { eq } from "drizzle-orm";
 // Import the auth user table (better-auth schema) from project root
 import { user as authUser } from "../../../../auth-schema";
+import { auth } from "@/lib/auth";
 
 type PatchBody = {
   name?: string;
@@ -15,18 +16,8 @@ type PatchBody = {
 };
 
 async function getSessionUser(req: NextRequest) {
-  const url = new URL("/api/auth/get-session", req.url);
-  const res = await fetch(url, {
-    headers: { cookie: req.headers.get("cookie") ?? "" },
-    cache: "no-store",
-  });
-  if (!res.ok) return null;
-  try {
-    const data = await res.json();
-    return data?.user ?? null;
-  } catch {
-    return null;
-  }
+  const session = await auth.api.getSession({ headers: req.headers });
+  return session?.user ?? null;
 }
 
 export async function PATCH(req: NextRequest) {

@@ -299,7 +299,11 @@ export default function CourseDetailPage() {
       });
       if (!res.ok) throw new Error("Failed to enroll");
       const firstLesson = lessons[0];
-      if (firstLesson) router.push(`/learn/${id}/${firstLesson.id}`);
+      if (firstLesson) {
+        router.push(`/learn/${id}/${firstLesson.id}`);
+      } else {
+        setError("Enrollment successful, but no lessons available to start.");
+      }
     } catch (err) {
       setError("Failed to enroll. Please try again.");
       console.error("Error enrolling:", err);
@@ -494,7 +498,7 @@ export default function CourseDetailPage() {
             <div className="flex gap-4 flex-wrap">
               <Button
                 onClick={enroll}
-                disabled={enrolling || !id}
+                disabled={enrolling || !id || lessons.length === 0}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
                 aria-label="Enroll in course"
               >
@@ -520,6 +524,8 @@ export default function CourseDetailPage() {
                     </svg>
                     Enrolling…
                   </span>
+                ) : lessons.length === 0 ? (
+                  "No Lessons Available"
                 ) : (
                   "Enroll and Start"
                 )}

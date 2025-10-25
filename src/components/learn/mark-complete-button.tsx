@@ -8,15 +8,18 @@ interface MarkCompleteButtonProps {
   lessonId: number;
   courseId: number;
   className?: string; // Optional className prop
+  onComplete?: () => void; // Optional callback
+  isCompleted?: boolean; // Current completion status
 }
 
 export default function MarkCompleteButton({
   lessonId,
   courseId,
   className,
+  onComplete,
+  isCompleted = false,
 }: MarkCompleteButtonProps) {
   const [saving, setSaving] = useState(false);
-  const [done, setDone] = useState(false);
   const [requiresQuiz, setRequiresQuiz] = useState(false);
   const [quizPassed, setQuizPassed] = useState(false);
   const [checkingQuiz, setCheckingQuiz] = useState(true);
@@ -64,12 +67,12 @@ export default function MarkCompleteButton({
 
       if (res.ok) {
         const data = await res.json();
-        setDone(true);
         if (data.certificateUrl) {
           toast.success("Course completed! Certificate issued.");
         } else {
           toast.success("Lesson completed!");
         }
+        onComplete?.(); // Call the callback
       } else {
         const error = await res.json();
         if (error.requiresQuiz) {
@@ -105,11 +108,11 @@ export default function MarkCompleteButton({
 
   return (
     <Button
-      disabled={saving || done}
+      disabled={saving || isCompleted}
       onClick={handleComplete}
       className={className}
     >
-      {done ? "Completed" : saving ? "Saving…" : "Mark complete"}
+      {isCompleted ? "Completed" : saving ? "Saving…" : "Mark complete"}
     </Button>
   );
 }

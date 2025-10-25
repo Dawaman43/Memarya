@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +12,19 @@ export default function NewCoursePage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
-  const [category, setCategory] = useState("General");
+  const [categories, setCategories] = useState<
+    { category: string; count: number }[]
+  >([]);
+  const [category, setCategory] = useState("");
+  // Ensure these common categories are always available for admins
+  const DEFAULT_CATEGORIES = [
+    "Programming Fundamentals",
+    "Data Structures & Algorithms",
+    "Web Development",
+    "Databases",
+    "DevOps",
+    "Cloud Computing",
+  ];
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [urlWarning, setUrlWarning] = useState<string | null>(null);
@@ -37,6 +49,33 @@ export default function NewCoursePage() {
       /https:\/\/www\.youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/g;
     return text.replace(watchUrlRegex, "https://www.youtube.com/embed/$1");
   };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/courses/categories");
+        const data = await res.json();
+        if (res.ok) {
+          const fetched: { category: string; count: number }[] =
+            data.categories || [];
+          // Merge defaults (keep fetched counts where present)
+          const map = new Map<string, number>();
+          for (const f of fetched) map.set(f.category, f.count ?? 0);
+          for (const d of DEFAULT_CATEGORIES) {
+            if (!map.has(d)) map.set(d, 0);
+          }
+          const merged = Array.from(map.entries()).map(([category, count]) => ({
+            category,
+            count,
+          }));
+          setCategories(merged);
+          if (merged.length > 0) setCategory(merged[0].category);
+        }
+      } catch (e) {
+        // ignore
+      }
+    })();
+  }, []);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -105,12 +144,23 @@ export default function NewCoursePage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
-              <Input
+              <select
                 id="category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                placeholder="e.g., Web Development, DSA, Cloud"
-              />
+                className="block w-full rounded border px-2 py-2 bg-transparent"
+              >
+                {categories.length === 0 && <option value="">General</option>}
+                {categories.map((c) => (
+                  <option key={c.category} value={c.category}>
+                    {c.category}
+                  </option>
+                ))}
+              </select>
+              <p className="text-sm text-muted-foreground">
+                Select a category for the course. These come from the Explore
+                categories used in the header.
+              </p>
             </div>
             {error && <p className="text-sm text-red-600">{error}</p>}
             <div className="flex gap-2">

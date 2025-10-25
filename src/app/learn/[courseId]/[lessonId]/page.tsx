@@ -161,6 +161,7 @@ export default function LessonPage() {
     : NaN;
   const [course, setCourse] = useState<Course | null>(null);
   const [lesson, setLesson] = useState<Lesson | null>(null);
+  const [allLessons, setAllLessons] = useState<Lesson[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState<string>("");
   const [isBookmarked, setIsBookmarked] = useState(false);
@@ -172,6 +173,11 @@ export default function LessonPage() {
     passingScore?: number;
   }>({ hasQuiz: false, passed: false });
   const [components, setComponents] = useState<any[] | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const refetchLesson = () => {
+    setRefreshKey((prev) => prev + 1);
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined" && lessonId) {
@@ -197,9 +203,10 @@ export default function LessonPage() {
           const { error } = await res.json();
           throw new Error(error || "Failed to load lesson");
         }
-        const { course, lesson } = await res.json();
+        const { course, lesson, lessons } = await res.json();
         setCourse(course);
         setLesson(lesson);
+        setAllLessons(lessons || []);
         // fetch lesson components
         try {
           const compRes = await fetch(
@@ -217,7 +224,7 @@ export default function LessonPage() {
         console.error("Error fetching lesson:", err);
       }
     })();
-  }, [courseId, lessonId]);
+  }, [courseId, lessonId, refreshKey]);
 
   useEffect(() => {
     // Check quiz status for this lesson
@@ -286,6 +293,28 @@ export default function LessonPage() {
     return <ErrorState message={error || "Lesson not found"} />;
   }
 
+  const getNextLesson = () => {
+    if (!lesson || !allLessons.length) return null;
+    const currentIndex = allLessons.findIndex((l) => l.id === lesson.id);
+    if (currentIndex === -1 || currentIndex === allLessons.length - 1)
+      return null;
+    return allLessons[currentIndex + 1];
+  };
+
+  const getPreviousLesson = () => {
+    if (!lesson || !allLessons.length) return null;
+    const currentIndex = allLessons.findIndex((l) => l.id === lesson.id);
+    if (currentIndex <= 0) return null;
+    return allLessons[currentIndex - 1];
+  };
+
+  const nextLesson = getNextLesson();
+  const previousLesson = getPreviousLesson();
+
+  // Check if all lessons are completed
+  const allLessonsCompleted =
+    allLessons.length > 0 && allLessons.every((l) => l.completed);
+
   const sanitizedContent = DOMPurify.sanitize(lesson.content || "", {
     ADD_TAGS: ["iframe"],
     ADD_ATTR: ["allow", "allowfullscreen", "frameborder", "scrolling", "src"],
@@ -344,6 +373,12 @@ export default function LessonPage() {
               </div>
               <p className="text-sm text-gray-500">
                 Course: {course.title}
+                {allLessons.length > 0 && (
+                  <span className="ml-4">
+                    Lesson {allLessons.findIndex((l) => l.id === lesson.id) + 1}{" "}
+                    of {allLessons.length}
+                  </span>
+                )}
                 {lesson.duration && (
                   <span className="ml-4">
                     <Clock className="w-4 h-4 inline mr-1" /> {lesson.duration}{" "}
@@ -562,12 +597,67 @@ export default function LessonPage() {
                 </div>
               )}
 
+              {/* Course Completion Celebration */}
+              {allLessonsCompleted && (
+                <div className="mt-6 p-6 border rounded-lg bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border-green-200 dark:border-green-800">
+                  <div className="text-center">
+                    <div className="text-4xl mb-2">🎉</div>
+                    <h3 className="text-xl font-bold text-green-800 dark:text-green-200 mb-2">
+                      Congratulations!
+                    </h3>
+                    <p className="text-green-700 dark:text-green-300 mb-4">
+                      You have successfully completed all lessons in this
+                      course.
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Click the "View Certificate" button below to download your
+                      certificate of completion.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-4 flex-wrap">
                 <MarkCompleteButton
                   lessonId={lesson.id}
                   courseId={courseId}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
+                  onComplete={refetchLesson}
+                  isCompleted={lesson.completed}
                 />
+                {nextLesson && (
+                  <Button
+                    asChild
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md"
+                    aria-label={`Go to next lesson: ${nextLesson.title}`}
+                  >
+                    <Link href={`/learn/${courseId}/${nextLesson.id}`}>
+                      Next Lesson
+                    </Link>
+                  </Button>
+                )}
+                {allLessonsCompleted && (
+                  <Button
+                    asChild
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md"
+                    aria-label="View course certificate"
+                  >
+                    <Link href={`/courses/${courseId}/certificate`}>
+                      🎉 View Certificate
+                    </Link>
+                  </Button>
+                )}
+                {previousLesson && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    aria-label={`Go to previous lesson: ${previousLesson.title}`}
+                  >
+                    <Link href={`/learn/${courseId}/${previousLesson.id}`}>
+                      Previous Lesson
+                    </Link>
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   onClick={() => router.push(`/courses/${courseId}`)}

@@ -2,20 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { enrollmentsTable } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
+import { auth } from "@/lib/auth";
 
 async function getSessionUser(req: NextRequest) {
-  const url = new URL("/api/auth/get-session", req.url);
-  const res = await fetch(url, {
-    headers: { cookie: req.headers.get("cookie") ?? "" },
-    cache: "no-store",
-  });
-  if (!res.ok) return null;
-  try {
-    const data = await res.json();
-    return data?.user ?? null;
-  } catch {
-    return null;
-  }
+  const session = await auth.api.getSession({ headers: req.headers });
+  return session?.user ?? null;
 }
 
 export async function POST(req: NextRequest) {

@@ -149,7 +149,9 @@ function Header({ user }: HeaderProps) {
                       <li>
                         <NavigationMenuLink asChild>
                           <Link
-                            href="/fundamentals"
+                            href={`/courses?category=${encodeURIComponent(
+                              "Programming Fundamentals"
+                            )}`}
                             className="group block select-none space-y-1 rounded-lg p-3 leading-none no-underline outline-none transition-colors"
                           >
                             <div className="mr-3 inline-flex h-10 w-10 items-center justify-center rounded-md">
@@ -169,7 +171,9 @@ function Header({ user }: HeaderProps) {
                       <li>
                         <NavigationMenuLink asChild>
                           <Link
-                            href="/dsa"
+                            href={`/courses?category=${encodeURIComponent(
+                              "Data Structures & Algorithms"
+                            )}`}
                             className="group block select-none space-y-1 rounded-lg p-3 leading-none no-underline outline-none transition-colors"
                           >
                             <div className="mr-3 inline-flex h-10 w-10 items-center justify-center rounded-md">
@@ -189,7 +193,9 @@ function Header({ user }: HeaderProps) {
                       <li>
                         <NavigationMenuLink asChild>
                           <Link
-                            href="/web-dev"
+                            href={`/courses?category=${encodeURIComponent(
+                              "Web Development"
+                            )}`}
                             className="group block select-none space-y-1 rounded-lg p-3 leading-none no-underline outline-none transition-colors"
                           >
                             <div className="mr-3 inline-flex h-10 w-10 items-center justify-center rounded-md">
@@ -209,7 +215,9 @@ function Header({ user }: HeaderProps) {
                       <li>
                         <NavigationMenuLink asChild>
                           <Link
-                            href="/databases"
+                            href={`/courses?category=${encodeURIComponent(
+                              "Databases"
+                            )}`}
                             className="group block select-none space-y-1 rounded-lg p-3 leading-none no-underline outline-none transition-colors"
                           >
                             <div className="mr-3 inline-flex h-10 w-10 items-center justify-center rounded-md">
@@ -229,7 +237,9 @@ function Header({ user }: HeaderProps) {
                       <li>
                         <NavigationMenuLink asChild>
                           <Link
-                            href="/devops"
+                            href={`/courses?category=${encodeURIComponent(
+                              "DevOps"
+                            )}`}
                             className="group block select-none space-y-1 rounded-lg p-3 leading-none no-underline outline-none transition-colors"
                           >
                             <div className="mr-3 inline-flex h-10 w-10 items-center justify-center rounded-md">
@@ -249,7 +259,9 @@ function Header({ user }: HeaderProps) {
                       <li>
                         <NavigationMenuLink asChild>
                           <Link
-                            href="/cloud"
+                            href={`/courses?category=${encodeURIComponent(
+                              "Cloud Computing"
+                            )}`}
                             className="group block select-none space-y-1 rounded-lg p-3 leading-none no-underline outline-none transition-colors"
                           >
                             <div className="mr-3 inline-flex h-10 w-10 items-center justify-center rounded-md">
@@ -420,32 +432,58 @@ function Header({ user }: HeaderProps) {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/fundamentals" className="flex items-center w-full">
+                <Link
+                  href={`/courses?category=${encodeURIComponent(
+                    "Programming Fundamentals"
+                  )}`}
+                  className="flex items-center w-full"
+                >
                   <Code className="mr-2 h-4 w-4" /> Programming Fundamentals
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/dsa" className="flex items-center w-full">
+                <Link
+                  href={`/courses?category=${encodeURIComponent(
+                    "Data Structures & Algorithms"
+                  )}`}
+                  className="flex items-center w-full"
+                >
                   <Database className="mr-2 h-4 w-4" /> DSA
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/web-dev" className="flex items-center w-full">
+                <Link
+                  href={`/courses?category=${encodeURIComponent(
+                    "Web Development"
+                  )}`}
+                  className="flex items-center w-full"
+                >
                   <BookOpen className="mr-2 h-4 w-4" /> Web Development
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/databases" className="flex items-center w-full">
+                <Link
+                  href={`/courses?category=${encodeURIComponent("Databases")}`}
+                  className="flex items-center w-full"
+                >
                   <Database className="mr-2 h-4 w-4" /> Databases
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/devops" className="flex items-center w-full">
+                <Link
+                  href={`/courses?category=${encodeURIComponent("DevOps")}`}
+                  className="flex items-center w-full"
+                >
                   <Cloud className="mr-2 h-4 w-4" /> DevOps
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/cloud" className="flex items-center w-full">
+                <Link
+                  href={`/courses?category=${encodeURIComponent(
+                    "Cloud Computing"
+                  )}`}
+                  className="flex items-center w-full"
+                >
                   <Cloud className="mr-2 h-4 w-4" /> Cloud Computing
                 </Link>
               </DropdownMenuItem>

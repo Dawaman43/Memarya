@@ -8,7 +8,9 @@ import {
   quizzesTable,
 } from "@/db/schema";
 import { and, desc, eq } from "drizzle-orm";
-// Note: Import PDFKit dynamically inside the handler to avoid Turbopack bundling issues
+import { jsPDF } from "jspdf";
+import fs from "fs";
+import path from "path";
 
 export const runtime = "nodejs";
 
@@ -31,9 +33,6 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ courseId: string }> }
 ) {
-  // Dynamically import pdfkit to avoid build errors with @swc/helpers in Turbopack
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const PDFDocument = (await import("pdfkit")).default as any;
   const user = await getSessionUser(req);
   if (!user)
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -119,108 +118,211 @@ export async function GET(
     }
   }
 
-  // Generate PDF into a Buffer
-  const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
-    const doc = new PDFDocument({ size: "A4", margin: 50 });
-    const chunks: Buffer[] = [];
-    doc.on("data", (chunk: any) => chunks.push(chunk as Buffer));
-    doc.on("end", () => resolve(Buffer.concat(chunks)));
-    doc.on("error", reject);
+  // Generate PDF using jsPDF
+  try {
+    const doc = new jsPDF({
+      orientation: "landscape",
+      unit: "mm",
+      format: "a4",
+    });
 
-    // Simple certificate design
     const title = "Certificate of Completion";
     const name = user.name ?? user.email ?? "Student";
-    const courseTitle = course.title;
-    const dateStr = new Date().toLocaleDateString();
+    const courseTitle = course.title ?? "Course";
+    const dateStr = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }); // Matches "October 19, 2025" format
+    const ceoName = "Dawit Worku";
+    const ceoTitle = "Chief Executive Officer";
 
-    // Border
-    doc
-      .rect(20, 20, doc.page.width - 40, doc.page.height - 40)
-      .strokeColor("#999999")
-      .lineWidth(2)
-      .stroke();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
 
-    // Header
-    doc
-      .fontSize(28)
-      .fillColor("#111827")
-      .font("Helvetica-Bold")
-      .text(title, { align: "center" })
-      .moveDown(1.5);
+    // Layout constants for landscape certificate
+    const leftMargin = 28;
+    const rightMargin = 28;
+    const topMargin = 20;
+    const bottomMargin = 28;
+    const contentWidth = pageWidth - leftMargin - rightMargin;
 
-    // Recipient
-    doc
-      .fontSize(20)
-      .font("Helvetica")
-      .fillColor("#374151")
-      .text("This certifies that", { align: "center" })
-      .moveDown(0.5);
+    // Clean white background and navy border
+    doc.setFillColor(255, 255, 255);
+    doc.rect(0, 0, pageWidth, pageHeight, "F");
+    doc.setDrawColor(18, 24, 72); // deep navy
+    doc.setLineWidth(6);
+    doc.rect(12, 12, pageWidth - 24, pageHeight - 24);
 
-    doc
-      .fontSize(26)
-      .font("Helvetica-Bold")
-      .fillColor("#111827")
-      .text(name, { align: "center" })
-      .moveDown(1);
+    // Large soft watermark letter centered behind content
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(180);
+    doc.setTextColor(235, 235, 240);
+    const watermark = "U";
+    doc.text(watermark, pageWidth / 2, pageHeight / 2 + 30, {
+      align: "center",
+      baseline: "middle",
+    });
 
-    // Course title
-    doc
-      .fontSize(18)
-      .font("Helvetica")
-      .fillColor("#374151")
-      .text("has successfully completed the course", { align: "center" })
-      .moveDown(0.4);
+    // Starting Y for top content
+    let cursorY = topMargin + 8;
 
-    doc
-      .fontSize(22)
-      .font("Helvetica-Bold")
-      .fillColor("#111827")
-      .text(`“${courseTitle}”`, { align: "center" })
-      .moveDown(1.5);
+    // Top center: small brand line
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(18, 24, 72);
+    const brandText = "MEMARYA";
+    doc.text(brandText, pageWidth / 2, cursorY, { align: "center" });
+    cursorY += 12;
 
-    // Date
-    doc
-      .fontSize(14)
-      .font("Helvetica")
-      .fillColor("#6B7280")
-      .text(`Issued on ${dateStr}`, { align: "center" })
-      .moveDown(2);
+    // Verified certificate subtitle
+    doc.setFont("times", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(74, 85, 121);
+    const certTitle = "Verified Certificate Of Nanodegree Program Completion";
+    doc.text(certTitle, pageWidth / 2, cursorY, { align: "center" });
+    cursorY += 18;
 
-    // Signature placeholder
-    const y = doc.y + 40;
-    const leftX = 90;
-    const rightX = doc.page.width - 250;
-    doc
-      .moveTo(leftX, y)
-      .lineTo(leftX + 200, y)
-      .strokeColor("#9CA3AF")
-      .lineWidth(1)
-      .stroke();
-    doc
-      .moveTo(rightX, y)
-      .lineTo(rightX + 200, y)
-      .strokeColor("#9CA3AF")
-      .lineWidth(1)
-      .stroke();
-    doc
-      .fontSize(12)
-      .fillColor("#6B7280")
-      .text("Instructor", leftX, y + 5, { width: 200, align: "center" });
-    doc
-      .fontSize(12)
-      .fillColor("#6B7280")
-      .text("Director", rightX, y + 5, { width: 200, align: "center" });
+    // Large course title centered near top
+    doc.setFont("times", "bold");
+    doc.setFontSize(42);
+    doc.setTextColor(20, 20, 20);
+    // If too long, split into two lines within content width
+    const titleLines = doc.splitTextToSize(courseTitle, contentWidth - 40);
+    for (let i = 0; i < titleLines.length; i++) {
+      doc.text(titleLines[i], pageWidth / 2, cursorY + i * 20, {
+        align: "center",
+      });
+    }
+    cursorY += Math.max(40, titleLines.length * 20) + 6;
 
-    doc.end();
-  });
+    // Left column: Awarded to, name and date
+    const leftColumnX = leftMargin + 18;
+    const leftColumnY = Math.max(cursorY + 10, pageHeight / 2 - 20);
 
-  const filename = `certificate-course-${courseId}.pdf`;
-  return new Response(new Uint8Array(pdfBuffer), {
-    status: 200,
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${filename}"`,
-      "Cache-Control": "no-store",
-    },
-  });
+    doc.setFont("times", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(80, 92, 140);
+    doc.text("Awarded to", leftColumnX, leftColumnY);
+
+    // Recipient name (large, blue)
+    let nameFont = 36;
+    doc.setFont("times", "bold");
+    doc.setFontSize(nameFont);
+    // reduce font if too wide for left column area
+    const leftColumnWidth = contentWidth * 0.45;
+    while (doc.getTextWidth(name) > leftColumnWidth - 10 && nameFont > 18) {
+      nameFont -= 2;
+      doc.setFontSize(nameFont);
+    }
+    doc.setTextColor(24, 52, 150);
+    const nameY = leftColumnY + 18;
+    doc.text(name, leftColumnX, nameY);
+
+    // Date below
+    doc.setFont("times", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(90, 102, 128);
+    doc.text(dateStr, leftColumnX, nameY + 12);
+
+    // Footer and bottom-left logo/text
+    const footerY = pageHeight - bottomMargin - 30;
+    const footerTextY = footerY + 6;
+
+    // Attempt to draw logo at bottom-left (public/logo.png or public/logo-small.png)
+    try {
+      let logoPath = path.join(process.cwd(), "public", "logo-small.png");
+      const altLogo = path.join(process.cwd(), "public", "logo.png");
+      if (!fs.existsSync(logoPath) && fs.existsSync(altLogo))
+        logoPath = altLogo;
+      if (fs.existsSync(logoPath)) {
+        const logoBuf = fs.readFileSync(logoPath);
+        const logoBase64 = logoBuf.toString("base64");
+        const logoData = `data:image/png;base64,${logoBase64}`;
+        // draw small logo
+        // @ts-ignore
+        doc.addImage(logoData, "PNG", leftMargin, footerY - 6, 28, 14);
+      } else {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.setTextColor(18, 24, 72);
+        doc.text("MEMARYA", leftMargin, footerY);
+      }
+    } catch (logoErr) {
+      console.warn("Logo load error:", logoErr);
+    }
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(90, 102, 128);
+    const footerText =
+      "Memarya has confirmed participation of this individual in this program. Confirmation at www.memarya.com/certificate/e/cf81df2";
+    const footerLines = doc.splitTextToSize(footerText, contentWidth * 0.6);
+    for (let i = 0; i < footerLines.length; i++) {
+      doc.text(footerLines[i], leftMargin + 36, footerTextY + i * 4.5);
+    }
+
+    // Signature area bottom-right
+    const sigW = 64;
+    const sigH = 28;
+    const sigX = pageWidth - rightMargin - sigW - 6;
+    const sigY = footerY - 8;
+    try {
+      const primarySig = path.join(
+        process.cwd(),
+        "public",
+        "signatures",
+        "dawit-worku.png"
+      );
+      const fallbackSig = path.join(process.cwd(), "public", "signature.png");
+      let sigPath = primarySig;
+      if (!fs.existsSync(primarySig) && fs.existsSync(fallbackSig))
+        sigPath = fallbackSig;
+
+      if (fs.existsSync(sigPath)) {
+        const sigBuf = fs.readFileSync(sigPath);
+        const sigBase64 = sigBuf.toString("base64");
+        const imgData = `data:image/png;base64,${sigBase64}`;
+        // @ts-ignore - addImage may accept data URL
+        doc.addImage(imgData, "PNG", sigX, sigY, sigW, sigH);
+      } else {
+        doc.setDrawColor(18, 24, 72);
+        doc.setLineWidth(0.6);
+        doc.line(sigX, sigY + sigH / 2, sigX + sigW, sigY + sigH / 2);
+      }
+    } catch (imgError) {
+      console.warn("Error loading signature image:", imgError);
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.5);
+      doc.line(sigX, sigY + sigH / 2, sigX + sigW, sigY + sigH / 2);
+    }
+
+    doc.setFont("times", "italic");
+    doc.setFontSize(10);
+    doc.setTextColor(24, 24, 24);
+    // center CEO name under signature
+    doc.text(ceoName, sigX + sigW / 2, sigY + sigH + 8, { align: "center" });
+    doc.setFont("times", "normal");
+    doc.setFontSize(8);
+    doc.text(ceoTitle, sigX + sigW / 2, sigY + sigH + 14, { align: "center" });
+
+    // Export
+    const pdfBuffer = Buffer.from(doc.output("arraybuffer"));
+    console.log("PDF generated, size:", pdfBuffer.length);
+    const filename = `certificate-course-${courseId}.pdf`;
+    return new Response(pdfBuffer, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Cache-Control": "no-store",
+      },
+    });
+  } catch (error) {
+    console.error("PDF generation error:", error);
+    return new Response(
+      JSON.stringify({ error: "Failed to generate certificate" }),
+      { status: 500 }
+    );
+  }
 }

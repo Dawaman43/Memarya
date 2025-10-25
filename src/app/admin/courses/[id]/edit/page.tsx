@@ -119,7 +119,18 @@ export default function EditCoursePage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [categories, setCategories] = useState<
+    { category: string; count: number }[]
+  >([]);
   const [category, setCategory] = useState("");
+  const DEFAULT_CATEGORIES = [
+    "Programming Fundamentals",
+    "Data Structures & Algorithms",
+    "Web Development",
+    "Databases",
+    "DevOps",
+    "Cloud Computing",
+  ];
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lessons, setLessons] = useState<
@@ -152,7 +163,8 @@ export default function EditCoursePage() {
         setTitle(data.course.title || "");
         setDescription(data.course.description || "");
         setThumbnailUrl(data.course.thumbnailUrl || "");
-        setCategory(data.course.category || "General");
+        // set category to existing course category if present
+        setCategory(data.course.category || "");
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
         setError(msg);
@@ -161,6 +173,33 @@ export default function EditCoursePage() {
       }
     })();
   }, [id]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/courses/categories");
+        const data = await res.json();
+        if (res.ok) {
+          const fetched: { category: string; count: number }[] =
+            data.categories || [];
+          const map = new Map<string, number>();
+          for (const f of fetched) map.set(f.category, f.count ?? 0);
+          for (const d of DEFAULT_CATEGORIES) {
+            if (!map.has(d)) map.set(d, 0);
+          }
+          const merged = Array.from(map.entries()).map(([category, count]) => ({
+            category,
+            count,
+          }));
+          setCategories(merged);
+          // if this course had no category, default to first available
+          if (!category && merged.length > 0) setCategory(merged[0].category);
+        }
+      } catch (e) {
+        // ignore
+      }
+    })();
+  }, []);
 
   async function reloadLessons() {
     const res = await fetch(`/api/admin/courses/${id}/lessons`);
@@ -249,11 +288,23 @@ export default function EditCoursePage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
-                <Input
+                <select
                   id="category"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                />
+                  className="block w-full rounded border px-2 py-2 bg-transparent"
+                >
+                  {categories.length === 0 && <option value="">General</option>}
+                  {categories.map((c) => (
+                    <option key={c.category} value={c.category}>
+                      {c.category}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-sm text-muted-foreground">
+                  Choose a category for this course. Categories are sourced from
+                  the header's Explore list.
+                </p>
               </div>
               {error && <p className="text-sm text-red-600">{error}</p>}
               <div className="flex gap-2">
