@@ -17,7 +17,18 @@ type Course = {
   description: string | null;
   thumbnailUrl: string | null;
   category: string;
+  durationMinutes?: number | null;
+  studentCount?: number | null;
 };
+
+function formatDuration(minutes: number) {
+  const m = Number(minutes) || 0;
+  if (m <= 0) return "TBD";
+  const hrs = Math.floor(m / 60);
+  const mins = m % 60;
+  if (hrs > 0) return `${hrs}h${mins > 0 ? ` ${mins}m` : ""}`;
+  return `${mins}m`;
+}
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -211,11 +222,21 @@ export default function CoursesPage() {
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          <span>Duration TBD</span>
+                          <span>
+                            {course.durationMinutes &&
+                            course.durationMinutes > 0
+                              ? formatDuration(course.durationMinutes)
+                              : "TBD"}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Users className="h-3 w-3" />
-                          <span>Students TBD</span>
+                          <span>
+                            {typeof course.studentCount === "number" &&
+                            course.studentCount > 0
+                              ? `${course.studentCount}`
+                              : "TBD"}
+                          </span>
                         </div>
                       </div>
 
