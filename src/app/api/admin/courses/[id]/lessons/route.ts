@@ -51,12 +51,23 @@ export async function POST(
     videoUrl = null,
     order = null,
     duration = null,
+    hasQuiz = false,
+    quizPassingScore = 80,
   } = body ?? {};
   if (!title)
     return NextResponse.json({ error: "title required" }, { status: 400 });
   const [created] = await db
     .insert(lessonsTable)
-    .values({ courseId, title, content, videoUrl, order, duration })
+    .values({
+      courseId,
+      title,
+      content,
+      videoUrl,
+      order,
+      duration,
+      hasQuiz,
+      quizPassingScore,
+    })
     .returning();
   return NextResponse.json({ lesson: created }, { status: 201 });
 }

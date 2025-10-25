@@ -6,6 +6,110 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { EditComponentModal } from "@/components/admin/edit-component-modal";
+
+function ManageComponents({ lessonId }: { lessonId: number }) {
+  const [components, setComponents] = useState<any[] | null>(null);
+  const [show, setShow] = useState(false);
+  const [type, setType] = useState("quiz");
+
+  async function reload() {
+    const res = await fetch(`/api/admin/lessons/${lessonId}/components`);
+    const data = await res.json();
+    if (res.ok) setComponents(data.components || []);
+  }
+
+  async function add() {
+    const res = await fetch(`/api/admin/lessons/${lessonId}/components`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type }),
+    });
+    if (res.ok) reload();
+  }
+
+  async function remove(id: number) {
+    const res = await fetch(`/api/admin/lessons/components/${id}`, {
+      method: "DELETE",
+    });
+    if (res.ok) reload();
+  }
+
+  return (
+    <div className="inline-block">
+      <Button
+        size="sm"
+        variant="secondary"
+        onClick={async () => {
+          setShow(!show);
+          if (!components) await reload();
+        }}
+      >
+        Manage
+      </Button>
+      {show && (
+        <div className="mt-2 border rounded-md p-2 bg-white dark:bg-gray-800">
+          <div className="flex items-center gap-2 mb-2">
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className="border rounded px-2 py-1 bg-transparent text-sm"
+            >
+              <option value="quiz">Quiz (per-lesson)</option>
+              <option value="terminal">Terminal Exercise</option>
+              <option value="ide">IDE Exercise</option>
+              <option value="integrated-quiz">Integrated Quiz</option>
+              <option value="flashcards">Flashcards Review</option>
+              <option value="video">Video Component</option>
+              <option value="text">Reading/Text Component</option>
+              <option value="assignment">Assignment</option>
+              <option value="discussion">Discussion Forum</option>
+              <option value="code-challenge">Code Challenge</option>
+              <option value="interactive">Interactive Exercise</option>
+            </select>
+            <Button size="sm" onClick={add}>
+              Add
+            </Button>
+          </div>
+          <div className="space-y-2">
+            {components?.length ? (
+              components.map((c: any) => (
+                <div key={c.id} className="flex items-center justify-between">
+                  <div className="text-sm">{c.type}</div>
+                  <div className="flex gap-2">
+                    <EditComponentModal
+                      componentId={c.id}
+                      componentType={c.type}
+                      currentConfig={
+                        c.configJson ? JSON.parse(c.configJson) : {}
+                      }
+                      onSave={() => reload()}
+                      trigger={
+                        <Button size="sm" variant="secondary">
+                          Edit
+                        </Button>
+                      }
+                    />
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => remove(c.id)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-sm text-muted-foreground">No components</div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function EditCoursePage() {
   const params = useParams<{ id: string }>();
@@ -25,6 +129,13 @@ export default function EditCoursePage() {
   const [newLessonContent, setNewLessonContent] = useState("");
   const [newLessonVideoUrl, setNewLessonVideoUrl] = useState("");
   const [newLessonDuration, setNewLessonDuration] = useState<number | "">("");
+  const [newLessonHasQuiz, setNewLessonHasQuiz] = useState(false);
+  const [newLessonQuizPassingScore, setNewLessonQuizPassingScore] =
+    useState(80);
+  const [flashcards, setFlashcards] = useState<any[]>([]);
+  const [newFlashcardFront, setNewFlashcardFront] = useState("");
+  const [newFlashcardBack, setNewFlashcardBack] = useState("");
+  const [showFlashcards, setShowFlashcards] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -51,8 +162,15 @@ export default function EditCoursePage() {
     if (res.ok) setLessons(data.lessons || []);
   }
 
+  async function reloadFlashcards() {
+    const res = await fetch(`/api/admin/courses/${id}/flashcards`);
+    const data = await res.json();
+    if (res.ok) setFlashcards(data.flashcards || []);
+  }
+
   useEffect(() => {
     reloadLessons();
+    reloadFlashcards();
   }, [id]);
 
   async function onSave(e: React.FormEvent) {
@@ -161,6 +279,29 @@ export default function EditCoursePage() {
                     )
                   }
                 />
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="hasQuiz"
+                    checked={newLessonHasQuiz}
+                    onCheckedChange={(checked) =>
+                      setNewLessonHasQuiz(checked as boolean)
+                    }
+                  />
+                  <Label htmlFor="hasQuiz">Enable Quiz</Label>
+                </div>
+                {newLessonHasQuiz && (
+                  <Input
+                    type="number"
+                    placeholder="Passing Score %"
+                    value={newLessonQuizPassingScore}
+                    onChange={(e) =>
+                      setNewLessonQuizPassingScore(Number(e.target.value))
+                    }
+                    min="0"
+                    max="100"
+                    className="w-32"
+                  />
+                )}
                 <Button
                   type="button"
                   onClick={async () => {
@@ -177,6 +318,10 @@ export default function EditCoursePage() {
                           videoUrl: newLessonVideoUrl || null,
                           duration:
                             newLessonDuration === "" ? null : newLessonDuration,
+                          hasQuiz: newLessonHasQuiz,
+                          quizPassingScore: newLessonHasQuiz
+                            ? newLessonQuizPassingScore
+                            : null,
                         }),
                       }
                     );
@@ -185,6 +330,8 @@ export default function EditCoursePage() {
                       setNewLessonContent("");
                       setNewLessonVideoUrl("");
                       setNewLessonDuration("");
+                      setNewLessonHasQuiz(false);
+                      setNewLessonQuizPassingScore(80);
                       reloadLessons();
                     }
                   }}
@@ -199,11 +346,16 @@ export default function EditCoursePage() {
                   key={l.id}
                   className="border rounded-md p-3 flex items-center justify-between"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-muted-foreground w-8 text-right">
-                      {l.order ?? idx + 1}
-                    </span>
-                    <span className="font-medium">{l.title}</span>
+                  <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-muted-foreground w-8 text-right">
+                        {l.order ?? idx + 1}
+                      </span>
+                      <span className="font-medium">{l.title}</span>
+                    </div>
+                    <div className="mt-2 md:mt-0">
+                      <ManageComponents lessonId={l.id} />
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <Button
@@ -263,6 +415,108 @@ export default function EditCoursePage() {
                 <p className="text-sm text-muted-foreground">No lessons yet.</p>
               )}
             </ul>
+          </div>
+
+          {/* Flashcards Management */}
+          <div className="mt-8 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Flashcards</h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFlashcards(!showFlashcards)}
+              >
+                {showFlashcards ? "Hide" : "Manage"} ({flashcards.length})
+              </Button>
+            </div>
+
+            {showFlashcards && (
+              <div className="border rounded-md p-4 space-y-4">
+                {/* Add new flashcard */}
+                <div className="grid gap-3 md:grid-cols-2">
+                  <Textarea
+                    placeholder="Front of card (question/term)"
+                    value={newFlashcardFront}
+                    onChange={(e) => setNewFlashcardFront(e.target.value)}
+                    rows={2}
+                  />
+                  <Textarea
+                    placeholder="Back of card (answer/explanation)"
+                    value={newFlashcardBack}
+                    onChange={(e) => setNewFlashcardBack(e.target.value)}
+                    rows={2}
+                  />
+                </div>
+                <Button
+                  onClick={async () => {
+                    if (!newFlashcardFront.trim() || !newFlashcardBack.trim())
+                      return;
+                    const res = await fetch(
+                      `/api/admin/courses/${id}/flashcards`,
+                      {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          front: newFlashcardFront.trim(),
+                          back: newFlashcardBack.trim(),
+                        }),
+                      }
+                    );
+                    if (res.ok) {
+                      setNewFlashcardFront("");
+                      setNewFlashcardBack("");
+                      reloadFlashcards();
+                    }
+                  }}
+                >
+                  Add Flashcard
+                </Button>
+
+                {/* Existing flashcards */}
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {flashcards.length > 0 ? (
+                    flashcards.map((card) => (
+                      <div
+                        key={card.id}
+                        className="border rounded p-3 flex items-start justify-between gap-3"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm mb-1">Front:</div>
+                          <div className="text-sm bg-blue-50 dark:bg-blue-900/20 p-2 rounded mb-2">
+                            {card.front}
+                          </div>
+                          <div className="font-medium text-sm mb-1">Back:</div>
+                          <div className="text-sm bg-green-50 dark:bg-green-900/20 p-2 rounded">
+                            {card.back}
+                          </div>
+                        </div>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={async () => {
+                            const res = await fetch(
+                              `/api/admin/courses/${id}/flashcards`,
+                              {
+                                method: "DELETE",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ id: card.id }),
+                              }
+                            );
+                            if (res.ok) reloadFlashcards();
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No flashcards yet. Add some above!
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

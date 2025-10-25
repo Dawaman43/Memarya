@@ -5,6 +5,7 @@ import {
   lessonsTable,
   progressTable,
   certificatesTable,
+  quizResultsTable,
 } from "@/db/schema";
 import { and, eq, sql } from "drizzle-orm";
 
@@ -41,6 +42,30 @@ export async function POST(req: NextRequest) {
   if (!lesson)
     return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
 
+  // If lesson has quiz and user is trying to complete it, check quiz results
+  if (lesson.hasQuiz && completed) {
+    const [quizResult] = await db
+      .select()
+      .from(quizResultsTable)
+      .where(
+        and(
+          eq(quizResultsTable.userId, user.id),
+          eq(quizResultsTable.courseId, lesson.courseId),
+          eq(quizResultsTable.passed, true)
+        )
+      );
+    if (!quizResult) {
+      return NextResponse.json(
+        {
+          error: "Quiz must be passed to complete this lesson",
+          requiresQuiz: true,
+          quizPassingScore: lesson.quizPassingScore,
+        },
+        { status: 400 }
+      );
+    }
+  }
+
   // enrollment for user/course
   const [enrollment] = await db
     .select()
@@ -70,13 +95,11 @@ export async function POST(req: NextRequest) {
       .set({ completed: completed ? 1 : 0, updatedAt: sql`now()` })
       .where(eq(progressTable.id, existing[0].id));
   } else {
-    await db
-      .insert(progressTable)
-      .values({
-        enrollmentId: enrollment.id,
-        lessonId: lid,
-        completed: completed ? 1 : 0,
-      });
+    await db.insert(progressTable).values({
+      enrollmentId: enrollment.id,
+      lessonId: lid,
+      completed: completed ? 1 : 0,
+    });
   }
 
   // recompute overall progress and issue certificate if complete

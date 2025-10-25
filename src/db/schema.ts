@@ -27,6 +27,8 @@ export const lessonsTable = pgTable("lessons", {
   videoUrl: varchar({ length: 512 }),
   order: integer(),
   duration: integer(),
+  hasQuiz: boolean().default(false).notNull(),
+  quizPassingScore: integer().default(80),
   createdAt: timestamp().defaultNow(),
 });
 
@@ -126,4 +128,16 @@ export const quizResultsTable = pgTable("quiz_results", {
   score: integer().notNull(),
   passed: boolean().default(false).notNull(),
   submittedAt: timestamp().defaultNow(),
+});
+
+// Components attached to lessons (quiz, terminal, ide, integrated-quiz, etc.)
+export const lessonComponentsTable = pgTable("lesson_components", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  lessonId: integer()
+    .notNull()
+    .references(() => lessonsTable.id),
+  type: varchar({ length: 64 }).notNull(),
+  configJson: text(), // arbitrary JSON configuration for the component
+  order: integer(),
+  createdAt: timestamp().defaultNow(),
 });

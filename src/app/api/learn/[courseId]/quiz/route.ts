@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { quizzesTable, quizQuestionsTable } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 export async function GET(
   _req: NextRequest,
@@ -18,7 +18,15 @@ export async function GET(
     .from(quizzesTable)
     .where(eq(quizzesTable.courseId, courseId));
 
-  if (!quiz) return NextResponse.json({ courseId, questions: [] });
+  if (!quiz) {
+    return NextResponse.json({
+      quiz: {
+        id: courseId,
+        title: "Course Quiz",
+        questions: [],
+      },
+    });
+  }
 
   const rows = await db
     .select()
@@ -32,5 +40,11 @@ export async function GET(
     answerIndex: r.answerIndex,
   }));
 
-  return NextResponse.json({ courseId, quizId: quiz.id, questions });
+  return NextResponse.json({
+    quiz: {
+      id: quiz.id,
+      title: quiz.title || "Course Quiz",
+      questions,
+    },
+  });
 }

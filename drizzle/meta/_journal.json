@@ -15,6 +15,13 @@
       "when": 1761111420721,
       "tag": "0001_little_edwin_jarvis",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1761338816114,
+      "tag": "0002_ambitious_leopardon",
+      "breakpoints": true
     }
   ]
 }

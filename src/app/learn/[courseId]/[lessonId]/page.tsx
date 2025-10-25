@@ -19,6 +19,10 @@ import Link from "next/link";
 import DOMPurify from "dompurify";
 import toast from "react-hot-toast";
 import MarkCompleteButton from "@/components/learn/mark-complete-button";
+import TerminalExercise from "@/components/learn/TerminalExercise";
+import IDEExercise from "@/components/learn/IDEExercise";
+import { TextContent } from "@/components/learn/TextContent";
+import { VideoContent } from "@/components/learn/VideoContent";
 
 // Utility function to convert YouTube URLs to embed format
 const getEmbedUrl = (url: string | undefined): string => {
@@ -177,6 +181,12 @@ export default function LessonPage() {
   const [notes, setNotes] = useState<string>("");
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [quizStatus, setQuizStatus] = useState<{
+    hasQuiz: boolean;
+    passed: boolean;
+    score?: number;
+    passingScore?: number;
+  }>({ hasQuiz: false, passed: false });
 
   useEffect(() => {
     if (typeof window !== "undefined" && lessonId) {
@@ -205,6 +215,16 @@ export default function LessonPage() {
         const { course, lesson } = await res.json();
         setCourse(course);
         setLesson(lesson);
+        // fetch lesson components
+        try {
+          const compRes = await fetch(
+            `/api/learn/${courseId}/${lessonId}/components`
+          );
+          const compData = await compRes.json();
+          if (compRes.ok) setComponents(compData.components || []);
+        } catch (e) {
+          console.warn("Failed to load lesson components", e);
+        }
         setLoading(false);
       } catch (err) {
         setError("Failed to load lesson. Please try again.");
@@ -213,6 +233,34 @@ export default function LessonPage() {
       }
     })();
   }, [courseId, lessonId]);
+
+  useEffect(() => {
+    // Check quiz status for this lesson
+    if (lesson) {
+      const checkQuizStatus = async () => {
+        if (lesson.hasQuiz) {
+          try {
+            const res = await fetch(`/api/learn/${courseId}/quiz-results`);
+            if (res.ok) {
+              const data = await res.json();
+              const quizResult = data.results?.find(
+                (result: any) => result.courseId === courseId && result.passed
+              );
+              setQuizStatus({
+                hasQuiz: true,
+                passed: !!quizResult,
+                score: quizResult?.score,
+                passingScore: lesson.quizPassingScore,
+              });
+            }
+          } catch (error) {
+            console.error("Error checking quiz status:", error);
+          }
+        }
+      };
+      checkQuizStatus();
+    }
+  }, [lesson, courseId]);
 
   const saveNotes = (value: string) => {
     setNotes(value);
@@ -352,9 +400,181 @@ export default function LessonPage() {
                 )}
               </div>
 
+              {/* Lesson components (quiz, terminal, ide) */}
+              {components && components.length > 0 && (
+                <div className="mt-6 space-y-3">
+                  <h3 className="text-xl font-semibold">Activities</h3>
+                  <div className="space-y-2">
+                    {components.map((c) => (
+                      <div
+                        key={c.id}
+                        className="flex items-center justify-between border rounded p-3"
+                      >
+                        <div>
+                          <div className="font-medium">{c.type}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {c.configJson
+                              ? JSON.parse(c.configJson).description || ""
+                              : ""}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          {c.type === "quiz" && (
+                            <Button asChild size="sm">
+                              <Link
+                                href={`/learn/${courseId}/${lessonId}/quiz`}
+                              >
+                                Start Quiz
+                              </Link>
+                            </Button>
+                          )}
+                          {c.type === "flashcards" && (
+                            <Button asChild size="sm">
+                              <Link href={`/learn/${courseId}/flashcards`}>
+                                Review Flashcards
+                              </Link>
+                            </Button>
+                          )}
+                          {c.type === "terminal" && (
+                            <TerminalExercise
+                              config={
+                                c.configJson ? JSON.parse(c.configJson) : {}
+                              }
+                            />
+                          )}
+                          {c.type === "ide" && (
+                            <IDEExercise
+                              config={
+                                c.configJson ? JSON.parse(c.configJson) : {}
+                              }
+                            />
+                          )}
+                          {c.type === "video" && (
+                            <VideoContent
+                              title={
+                                c.configJson
+                                  ? JSON.parse(c.configJson).description ||
+                                    "Video Content"
+                                  : "Video Content"
+                              }
+                              videoUrl={
+                                c.configJson
+                                  ? JSON.parse(c.configJson).videoUrl
+                                  : undefined
+                              }
+                              videoId={
+                                c.configJson
+                                  ? JSON.parse(c.configJson).videoId
+                                  : undefined
+                              }
+                              thumbnail={
+                                c.configJson
+                                  ? JSON.parse(c.configJson).thumbnail
+                                  : undefined
+                              }
+                              trigger={<Button size="sm">Watch Video</Button>}
+                            />
+                          )}
+                          {c.type === "text" && (
+                            <TextContent
+                              title={
+                                c.configJson
+                                  ? JSON.parse(c.configJson).description ||
+                                    "Reading Content"
+                                  : "Reading Content"
+                              }
+                              content={
+                                c.configJson
+                                  ? JSON.parse(c.configJson).textContent ||
+                                    "No content available"
+                                  : "No content available"
+                              }
+                              trigger={<Button size="sm">Read Content</Button>}
+                            />
+                          )}
+                          {c.type === "assignment" && (
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                toast("Assignment submission coming soon!");
+                              }}
+                            >
+                              View Assignment
+                            </Button>
+                          )}
+                          {c.type === "discussion" && (
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                toast("Discussion forum coming soon!");
+                              }}
+                            >
+                              Join Discussion
+                            </Button>
+                          )}
+                          {c.type === "code-challenge" && (
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                toast("Code challenge coming soon!");
+                              }}
+                            >
+                              Start Challenge
+                            </Button>
+                          )}
+                          {c.type === "interactive" && (
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                toast("Interactive exercise coming soon!");
+                              }}
+                            >
+                              Start Exercise
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Quiz Section */}
+              {quizStatus.hasQuiz && (
+                <div className="mt-6 p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                  <h3 className="text-lg font-semibold mb-2">Lesson Quiz</h3>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Passing score required: {quizStatus.passingScore}%
+                      </p>
+                      {quizStatus.passed && (
+                        <p className="text-sm text-green-600 font-medium">
+                          ✓ Quiz passed with {quizStatus.score}% score
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      asChild
+                      variant={quizStatus.passed ? "outline" : "default"}
+                      className={
+                        quizStatus.passed
+                          ? "border-green-500 text-green-600"
+                          : ""
+                      }
+                    >
+                      <Link href={`/learn/${courseId}/${lessonId}/quiz`}>
+                        {quizStatus.passed ? "Retake Quiz" : "Take Quiz"}
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-4 flex-wrap">
                 <MarkCompleteButton
                   lessonId={lesson.id}
+                  courseId={courseId}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
                 />
                 <Button
