@@ -443,6 +443,9 @@ export default function LessonPage() {
                             <QuizComponent
                               courseId={courseId}
                               lessonId={lessonId}
+                              config={
+                                c.configJson ? JSON.parse(c.configJson) : {}
+                              }
                               onComplete={(score, passed) => {
                                 if (passed) {
                                   toast.success(`Quiz passed with ${score}%!`);

@@ -27,6 +27,13 @@ interface Quiz {
 
 interface ComponentConfig {
   quizId?: number;
+  // optional local questions for lesson-level quizzes
+  questions?: Array<{
+    id?: number;
+    question: string;
+    optionsJson: string;
+    answerIndex: number;
+  }>;
   description?: string;
   timeLimit?: number;
   passingScore?: number;
@@ -62,6 +69,8 @@ export function EditComponentModal({
   const [config, setConfig] = useState<ComponentConfig>(currentConfig);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
+  // local questions when using lesson-local quiz (stored in config.questions)
+  const [localQuestions, setLocalQuestions] = useState<any[]>([]);
   const [newQuestion, setNewQuestion] = useState("");
   const [newOptions, setNewOptions] = useState<string[]>(["", "", "", ""]);
   const [newAnswerIndex, setNewAnswerIndex] = useState<number>(0);
@@ -69,10 +78,19 @@ export function EditComponentModal({
 
   // When modal opens, initialize local config and load quizzes (and questions if applicable)
   useEffect(() => {
-    if (!open || componentType !== "quiz") return;
+    if (!open) return;
 
     // initialize local config from the current prop (in case it changed since last open)
     setConfig(currentConfig || {});
+
+    // If this component either is a quiz type or already contains questions in its config,
+    // load quiz lists and questions so the admin can manage them.
+    const shouldInitQuiz =
+      componentType === "quiz" ||
+      componentType === "integrated-quiz" ||
+      (currentConfig && Array.isArray(currentConfig.questions));
+
+    if (!shouldInitQuiz) return;
 
     // load quizzes, then load questions if a quiz is already selected
     (async () => {
@@ -94,6 +112,10 @@ export function EditComponentModal({
             const d = await r.json();
             setQuizQuestions(d.questions || []);
           }
+        } else {
+          // initialize local questions if present on the component config
+          const local = currentConfig?.questions || [];
+          setLocalQuestions(local || []);
         }
       } catch (err) {
         // swallow
@@ -107,6 +129,13 @@ export function EditComponentModal({
       const qid = config.quizId;
       if (!qid) {
         setQuizQuestions([]);
+        // use local questions from config when there is no linked quiz
+        try {
+          const local = config?.questions || [];
+          setLocalQuestions(local || []);
+        } catch (e) {
+          setLocalQuestions([]);
+        }
         return;
       }
       const quiz = quizzes.find((q) => q.id === Number(qid));
@@ -122,13 +151,19 @@ export function EditComponentModal({
   const handleSave = async () => {
     setLoading(true);
     try {
+      // attach localQuestions into config when present
+      const cfgToSave = { ...config } as any;
+      if (!cfgToSave.quizId) {
+        cfgToSave.questions = localQuestions || [];
+      }
+
       const res = await fetch(`/api/admin/lessons/components/${componentId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ configJson: JSON.stringify(config) }),
+        body: JSON.stringify({ configJson: JSON.stringify(cfgToSave) }),
       });
       if (res.ok) {
-        onSave(config);
+        onSave(cfgToSave);
         setOpen(false);
       }
     } finally {
@@ -144,8 +179,9 @@ export function EditComponentModal({
           <DialogTitle>Edit {componentType} Component</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          {/* Quiz-specific fields */}
-          {componentType === "quiz" && (
+          {/* Quiz-specific fields (support both course-level quiz and integrated-quiz) */}
+          {(componentType === "quiz" ||
+            componentType === "integrated-quiz") && (
             <>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="quiz" className="text-right">
@@ -379,6 +415,122 @@ export function EditComponentModal({
                                       setQuizQuestions(d.questions || []);
                                     }
                                   }
+                                }}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-sm text-muted-foreground">
+                          No questions yet.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* If no quizId is selected, allow lesson-local quiz questions stored in component config */}
+              {!config.quizId && (
+                <div className="border rounded p-3 space-y-3">
+                  <h3 className="font-medium">Manage Lesson-local Questions</h3>
+                  <div className="space-y-2">
+                    <Textarea
+                      placeholder="Question text"
+                      value={newQuestion}
+                      onChange={(e) => setNewQuestion(e.target.value)}
+                      rows={2}
+                    />
+                    <div className="space-y-2">
+                      {newOptions.map((opt, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="modal-local-correct-answer"
+                            checked={newAnswerIndex === idx}
+                            onChange={() => setNewAnswerIndex(idx)}
+                            className="w-4 h-4"
+                          />
+                          <Input
+                            placeholder={`Option ${idx + 1}`}
+                            value={opt}
+                            onChange={(e) => {
+                              const updated = [...newOptions];
+                              updated[idx] = e.target.value;
+                              setNewOptions(updated);
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={async () => {
+                          if (
+                            !newQuestion.trim() ||
+                            newOptions.some((o) => !o.trim())
+                          )
+                            return;
+                          const q = {
+                            id: Date.now(),
+                            question: newQuestion.trim(),
+                            optionsJson: JSON.stringify(
+                              newOptions.map((o) => o.trim())
+                            ),
+                            answerIndex: newAnswerIndex,
+                          };
+                          const updated = [...(localQuestions || []), q];
+                          setLocalQuestions(updated);
+                          setNewQuestion("");
+                          setNewOptions(["", "", "", ""]);
+                          setNewAnswerIndex(0);
+                        }}
+                      >
+                        Add Question
+                      </Button>
+                    </div>
+
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {localQuestions.length > 0 ? (
+                        localQuestions.map((q) => (
+                          <div
+                            key={q.id}
+                            className="border rounded p-2 flex items-start justify-between gap-2"
+                          >
+                            <div className="flex-1">
+                              <div className="font-medium text-sm mb-1">
+                                {q.question}
+                              </div>
+                              <div className="space-y-1 text-sm">
+                                {JSON.parse(q.optionsJson).map(
+                                  (opt: string, i: number) => (
+                                    <div
+                                      key={i}
+                                      className={`p-1 rounded ${
+                                        i === q.answerIndex
+                                          ? "bg-green-50 text-green-800"
+                                          : "bg-gray-50"
+                                      }`}
+                                    >
+                                      {i === q.answerIndex ? "✓ " : ""}
+                                      {opt}
+                                    </div>
+                                  )
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => {
+                                  const remaining = (
+                                    localQuestions || []
+                                  ).filter((x) => x.id !== q.id);
+                                  setLocalQuestions(remaining);
                                 }}
                               >
                                 Delete

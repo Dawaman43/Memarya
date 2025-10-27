@@ -18,12 +18,15 @@ interface QuizQuestion {
 interface QuizComponentProps {
   courseId: number;
   lessonId: number;
+  // optional component config (when quiz is configured on the lesson component)
+  config?: any;
   onComplete?: (score: number, passed: boolean) => void;
 }
 
 export function QuizComponent({
   courseId,
   lessonId,
+  config,
   onComplete,
 }: QuizComponentProps) {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -35,17 +38,40 @@ export function QuizComponent({
 
   useEffect(() => {
     loadQuiz();
-  }, [courseId]);
+  }, [courseId, config]);
 
   const loadQuiz = async () => {
     try {
+      // If the component config provides local questions, use them
+      if (
+        config &&
+        Array.isArray(config.questions) &&
+        config.questions.length
+      ) {
+        const qs: QuizQuestion[] = config.questions.map((q: any) => ({
+          id: q.id,
+          question: q.question,
+          optionsJson: q.optionsJson,
+          answerIndex: q.answerIndex,
+        }));
+        setQuestions(qs || []);
+        const initialAnswers: Record<number, number> = {};
+        (qs || []).forEach((q: QuizQuestion) => {
+          initialAnswers[q.id] = -1;
+        });
+        setAnswers(initialAnswers);
+        setLoading(false);
+        return;
+      }
+
+      // Otherwise load course-level quiz
       const res = await fetch(`/api/learn/${courseId}/quiz`);
       if (res.ok) {
         const data = await res.json();
-        setQuestions(data.questions || []);
-        // Initialize answers object
+        const qs: QuizQuestion[] = data.questions || [];
+        setQuestions(qs || []);
         const initialAnswers: Record<number, number> = {};
-        (data.questions || []).forEach((q: QuizQuestion) => {
+        (qs || []).forEach((q: QuizQuestion) => {
           initialAnswers[q.id] = -1;
         });
         setAnswers(initialAnswers);
@@ -74,11 +100,15 @@ export function QuizComponent({
 
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/learn/${courseId}/quiz/submit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers }),
-      });
+      // submit to lesson-specific submit endpoint which will accept answers for this lesson
+      const res = await fetch(
+        `/api/learn/${courseId}/${lessonId}/quiz/submit`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ answers }),
+        }
+      );
 
       if (res.ok) {
         const data = await res.json();
