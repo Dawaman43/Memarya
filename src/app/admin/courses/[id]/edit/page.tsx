@@ -9,7 +9,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EditComponentModal } from "@/components/admin/edit-component-modal";
 
-function ManageComponents({ lessonId }: { lessonId: number }) {
+function ManageComponents({
+  lessonId,
+  courseId,
+}: {
+  lessonId: number;
+  courseId: number;
+}) {
   const [components, setComponents] = useState<any[] | null>(null);
   const [show, setShow] = useState(false);
   const [type, setType] = useState("quiz");
@@ -84,6 +90,7 @@ function ManageComponents({ lessonId }: { lessonId: number }) {
                       currentConfig={
                         c.configJson ? JSON.parse(c.configJson) : {}
                       }
+                      courseId={courseId}
                       onSave={() => reload()}
                       trigger={
                         <Button size="sm" variant="secondary">
@@ -421,7 +428,7 @@ export default function EditCoursePage() {
                       <span className="font-medium">{l.title}</span>
                     </div>
                     <div className="mt-2 md:mt-0">
-                      <ManageComponents lessonId={l.id} />
+                      <ManageComponents lessonId={l.id} courseId={Number(id)} />
                     </div>
                   </div>
                   <div className="flex gap-2">

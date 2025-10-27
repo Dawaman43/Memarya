@@ -27,12 +27,28 @@ export async function POST(
   const { type, configJson } = body;
   if (!type)
     return NextResponse.json({ error: "Missing type" }, { status: 400 });
+  // Normalize configJson: if it's an object, stringify it; if it's a string, try to parse and re-stringify
+  let cfg: string | null = null;
+  if (configJson) {
+    if (typeof configJson === "string") {
+      try {
+        const parsed = JSON.parse(configJson);
+        cfg = JSON.stringify(parsed);
+      } catch (e) {
+        // it's a plain string, store as-is
+        cfg = configJson;
+      }
+    } else {
+      cfg = JSON.stringify(configJson);
+    }
+  }
+
   const result = await db
     .insert(lessonComponentsTable)
     .values({
       lessonId,
       type,
-      configJson: configJson ? JSON.stringify(configJson) : null,
+      configJson: cfg,
     })
     .returning({ id: lessonComponentsTable.id });
   return NextResponse.json({ id: result[0].id });

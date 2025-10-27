@@ -34,11 +34,8 @@ export async function POST(
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   const body = await req.json();
   const { title, questions } = body || {};
-  if (!Array.isArray(questions) || questions.length === 0)
-    return NextResponse.json(
-      { error: "No questions provided" },
-      { status: 400 }
-    );
+  // If questions not provided, we'll still allow creating/updating the quiz metadata
+  const hasQuestions = Array.isArray(questions) && questions.length > 0;
 
   let [quiz] = await db
     .select()
@@ -57,17 +54,20 @@ export async function POST(
       .where(eq(quizzesTable.id, quiz.id));
   }
 
-  // Replace questions
-  await db
-    .delete(quizQuestionsTable)
-    .where(eq(quizQuestionsTable.quizId, quiz.id));
-  const values = questions.map((q: any) => ({
-    quizId: quiz.id,
-    question: String(q.question || ""),
-    optionsJson: JSON.stringify(q.options || []),
-    answerIndex: Number(q.answerIndex ?? 0),
-  }));
-  await db.insert(quizQuestionsTable).values(values);
+  // If questions were provided, replace them. Otherwise leave questions untouched.
+  if (hasQuestions) {
+    await db
+      .delete(quizQuestionsTable)
+      .where(eq(quizQuestionsTable.quizId, quiz.id));
+    const values = questions.map((q: any) => ({
+      quizId: quiz.id,
+      question: String(q.question || ""),
+      optionsJson: JSON.stringify(q.options || []),
+      answerIndex: Number(q.answerIndex ?? 0),
+    }));
+    if (values.length) await db.insert(quizQuestionsTable).values(values);
+  }
 
-  return NextResponse.json({ ok: true });
+  // Return the quiz object so callers (UI) can know the quiz id
+  return NextResponse.json({ ok: true, quiz });
 }

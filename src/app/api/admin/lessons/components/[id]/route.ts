@@ -23,9 +23,24 @@ export async function PUT(
   const id = Number(p.id);
   const body = await req.json();
   const { configJson, type } = body;
+  // Normalize incoming configJson (avoid double-serializing a stringified JSON)
+  let cfg: string | null = null;
+  if (configJson) {
+    if (typeof configJson === "string") {
+      try {
+        const parsed = JSON.parse(configJson);
+        cfg = JSON.stringify(parsed);
+      } catch (e) {
+        cfg = configJson;
+      }
+    } else {
+      cfg = JSON.stringify(configJson);
+    }
+  }
+
   await db
     .update(lessonComponentsTable)
-    .set({ configJson: configJson ? JSON.stringify(configJson) : null, type })
+    .set({ configJson: cfg, type })
     .where(eq(lessonComponentsTable.id, id));
   return NextResponse.json({ ok: true });
 }

@@ -46,6 +46,7 @@ interface EditComponentModalProps {
   componentType: string;
   currentConfig: ComponentConfig;
   onSave: (config: ComponentConfig) => void;
+  courseId?: number;
   trigger: React.ReactNode;
 }
 
@@ -55,19 +56,68 @@ export function EditComponentModal({
   currentConfig,
   onSave,
   trigger,
+  courseId,
 }: EditComponentModalProps) {
   const [open, setOpen] = useState(false);
   const [config, setConfig] = useState<ComponentConfig>(currentConfig);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
+  const [newQuestion, setNewQuestion] = useState("");
+  const [newOptions, setNewOptions] = useState<string[]>(["", "", "", ""]);
+  const [newAnswerIndex, setNewAnswerIndex] = useState<number>(0);
   const [loading, setLoading] = useState(false);
 
+  // When modal opens, initialize local config and load quizzes (and questions if applicable)
   useEffect(() => {
-    if (open && componentType === "quiz") {
-      fetch("/api/admin/quizzes")
-        .then((res) => res.json())
-        .then((data) => setQuizzes(data.quizzes || []));
+    if (!open || componentType !== "quiz") return;
+
+    // initialize local config from the current prop (in case it changed since last open)
+    setConfig(currentConfig || {});
+
+    // load quizzes, then load questions if a quiz is already selected
+    (async () => {
+      try {
+        const res = await fetch("/api/admin/quizzes", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json();
+        const qs: Quiz[] = data.quizzes || [];
+        setQuizzes(qs);
+
+        const selectedQuizId = currentConfig?.quizId;
+        if (selectedQuizId) {
+          const quiz = qs.find((q) => q.id === Number(selectedQuizId));
+          if (quiz) {
+            const r = await fetch(`/api/admin/courses/${quiz.courseId}/quiz`, {
+              cache: "no-store",
+            });
+            if (!r.ok) return;
+            const d = await r.json();
+            setQuizQuestions(d.questions || []);
+          }
+        }
+      } catch (err) {
+        // swallow
+      }
+    })();
+  }, [open, componentType, currentConfig]);
+
+  // When a quiz is selected, load its questions (we can derive courseId from quizzes list)
+  useEffect(() => {
+    async function loadQuestions() {
+      const qid = config.quizId;
+      if (!qid) {
+        setQuizQuestions([]);
+        return;
+      }
+      const quiz = quizzes.find((q) => q.id === Number(qid));
+      if (!quiz) return;
+      const res = await fetch(`/api/admin/courses/${quiz.courseId}/quiz`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setQuizQuestions(data.questions || []);
     }
-  }, [open, componentType]);
+    loadQuestions();
+  }, [config.quizId, quizzes]);
 
   const handleSave = async () => {
     setLoading(true);
@@ -120,6 +170,41 @@ export function EditComponentModal({
                   </SelectContent>
                 </Select>
               </div>
+              {/* If no quiz is selected, allow creating one for this course (if courseId provided) */}
+              {!config.quizId && courseId && (
+                <div className="col-span-4">
+                  <Button
+                    size="sm"
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(
+                          `/api/admin/courses/${courseId}/quiz`,
+                          {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              title: `Course ${courseId} Quiz`,
+                            }),
+                          }
+                        );
+                        if (!res.ok) return;
+                        const data = await res.json();
+                        const created = data.quiz;
+                        if (created) {
+                          // add to local quizzes and select it
+                          setQuizzes((s) => [created, ...(s || [])]);
+                          setConfig({ ...config, quizId: created.id });
+                          setQuizQuestions([]);
+                        }
+                      } catch (e) {
+                        // ignore
+                      }
+                    }}
+                  >
+                    Create quiz for this course
+                  </Button>
+                </div>
+              )}
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="timeLimit" className="text-right">
                   Time Limit (min)
@@ -156,6 +241,160 @@ export function EditComponentModal({
                   placeholder="Default: 80"
                 />
               </div>
+
+              {/* Quiz question management when a quiz is selected */}
+              {config.quizId && (
+                <div className="border rounded p-3 space-y-3">
+                  <h3 className="font-medium">Manage Questions</h3>
+                  <div className="space-y-2">
+                    <Textarea
+                      placeholder="Question text"
+                      value={newQuestion}
+                      onChange={(e) => setNewQuestion(e.target.value)}
+                      rows={2}
+                    />
+                    <div className="space-y-2">
+                      {newOptions.map((opt, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="modal-correct-answer"
+                            checked={newAnswerIndex === idx}
+                            onChange={() => setNewAnswerIndex(idx)}
+                            className="w-4 h-4"
+                          />
+                          <Input
+                            placeholder={`Option ${idx + 1}`}
+                            value={opt}
+                            onChange={(e) => {
+                              const updated = [...newOptions];
+                              updated[idx] = e.target.value;
+                              setNewOptions(updated);
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={async () => {
+                          if (
+                            !newQuestion.trim() ||
+                            newOptions.some((o) => !o.trim())
+                          )
+                            return;
+                          const quiz = quizzes.find(
+                            (q) => q.id === Number(config.quizId)
+                          );
+                          if (!quiz) return;
+                          const res = await fetch(
+                            `/api/admin/courses/${quiz.courseId}/quiz/questions`,
+                            {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                question: newQuestion.trim(),
+                                optionsJson: JSON.stringify(
+                                  newOptions.map((o) => o.trim())
+                                ),
+                                answerIndex: newAnswerIndex,
+                              }),
+                            }
+                          );
+                          if (res.ok) {
+                            setNewQuestion("");
+                            setNewOptions(["", "", "", ""]);
+                            setNewAnswerIndex(0);
+                            // reload questions
+                            const r2 = await fetch(
+                              `/api/admin/courses/${quiz.courseId}/quiz`
+                            );
+                            if (r2.ok) {
+                              const d = await r2.json();
+                              setQuizQuestions(d.questions || []);
+                            }
+                          }
+                        }}
+                      >
+                        Add Question
+                      </Button>
+                    </div>
+
+                    {/* Existing questions */}
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {quizQuestions.length > 0 ? (
+                        quizQuestions.map((q) => (
+                          <div
+                            key={q.id}
+                            className="border rounded p-2 flex items-start justify-between gap-2"
+                          >
+                            <div className="flex-1">
+                              <div className="font-medium text-sm mb-1">
+                                {q.question}
+                              </div>
+                              <div className="space-y-1 text-sm">
+                                {JSON.parse(q.optionsJson).map(
+                                  (opt: string, i: number) => (
+                                    <div
+                                      key={i}
+                                      className={`p-1 rounded ${
+                                        i === q.answerIndex
+                                          ? "bg-green-50 text-green-800"
+                                          : "bg-gray-50"
+                                      }`}
+                                    >
+                                      {i === q.answerIndex ? "✓ " : ""}
+                                      {opt}
+                                    </div>
+                                  )
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={async () => {
+                                  const quiz = quizzes.find(
+                                    (qq) => qq.id === Number(config.quizId)
+                                  );
+                                  if (!quiz) return;
+                                  const res = await fetch(
+                                    `/api/admin/courses/${quiz.courseId}/quiz/questions`,
+                                    {
+                                      method: "DELETE",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({ id: q.id }),
+                                    }
+                                  );
+                                  if (res.ok) {
+                                    const r2 = await fetch(
+                                      `/api/admin/courses/${quiz.courseId}/quiz`
+                                    );
+                                    if (r2.ok) {
+                                      const d = await r2.json();
+                                      setQuizQuestions(d.questions || []);
+                                    }
+                                  }
+                                }}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-sm text-muted-foreground">
+                          No questions yet.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           )}
 
