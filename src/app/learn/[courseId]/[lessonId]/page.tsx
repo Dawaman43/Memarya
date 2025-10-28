@@ -613,8 +613,8 @@ export default function LessonPage() {
                       course.
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Click the "View Certificate" button below to download your
-                      certificate of completion.
+                      Click the &quot;View Certificate&quot; button below to download
+                      your certificate of completion.
                     </p>
                   </div>
                 </div>

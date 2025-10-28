@@ -101,14 +101,12 @@ export default function LessonQuizPage() {
   if (!quiz) {
     return (
       <div className="container mx-auto p-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Quiz Not Found</h1>
-          <p className="text-gray-600 mb-4">
-            This lesson doesn't have a quiz configured.
-          </p>
-          <Button onClick={() => router.back()}>Go Back</Button>
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Quiz Not Found</h1>
+            <p className="text-gray-600 mb-4">This lesson does not have a quiz configured.</p>
+            <Button onClick={() => router.back()}>Go Back</Button>
+          </div>
         </div>
-      </div>
     );
   }
 

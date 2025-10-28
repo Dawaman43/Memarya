@@ -240,8 +240,8 @@ export async function GET(
         const logoBase64 = logoBuf.toString("base64");
         const logoData = `data:image/png;base64,${logoBase64}`;
         // draw small logo
-        // @ts-ignore
-        doc.addImage(logoData, "PNG", leftMargin, footerY - 6, 28, 14);
+  // addImage with data URL (jsPDF typings are acceptable here)
+  doc.addImage(logoData, "PNG", leftMargin, footerY - 6, 28, 14);
       } else {
         doc.setFont("helvetica", "bold");
         doc.setFontSize(12);
@@ -283,8 +283,8 @@ export async function GET(
         const sigBuf = fs.readFileSync(sigPath);
         const sigBase64 = sigBuf.toString("base64");
         const imgData = `data:image/png;base64,${sigBase64}`;
-        // @ts-ignore - addImage may accept data URL
-        doc.addImage(imgData, "PNG", sigX, sigY, sigW, sigH);
+  // addImage with data URL (jsPDF typings are acceptable here)
+  doc.addImage(imgData, "PNG", sigX, sigY, sigW, sigH);
       } else {
         doc.setDrawColor(18, 24, 72);
         doc.setLineWidth(0.6);
