@@ -1,0 +1,154 @@
+
+/home/dawit/Documents/Memarya/src/app/admin/courses/[id]/edit/page.tsx
+   19:48  error    Unexpected any. Specify a different type                                                                                                                  @typescript-eslint/no-explicit-any
+   83:34  error    Unexpected any. Specify a different type                                                                                                                  @typescript-eslint/no-explicit-any
+  153:48  error    Unexpected any. Specify a different type                                                                                                                  @typescript-eslint/no-explicit-any
+  157:36  error    Unexpected any. Specify a different type                                                                                                                  @typescript-eslint/no-explicit-any
+  158:54  error    Unexpected any. Specify a different type                                                                                                                  @typescript-eslint/no-explicit-any
+  205:16  warning  'e' is defined but never used                                                                                                                             @typescript-eslint/no-unused-vars
+  209:6   warning  React Hook useEffect has missing dependencies: 'DEFAULT_CATEGORIES' and 'category'. Either include them or remove the dependency array                    react-hooks/exhaustive-deps
+  236:6   warning  React Hook useEffect has missing dependencies: 'reloadFlashcards', 'reloadLessons', and 'reloadQuiz'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  313:29  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                           react/no-unescaped-entities
+
+/home/dawit/Documents/Memarya/src/app/admin/courses/new/page.tsx
+  74:16  warning  'e' is defined but never used                                                                                          @typescript-eslint/no-unused-vars
+  78:6   warning  React Hook useEffect has a missing dependency: 'DEFAULT_CATEGORIES'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/dawit/Documents/Memarya/src/app/api/admin/courses/[id]/flashcards/route.ts
+  33:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/dawit/Documents/Memarya/src/app/api/admin/courses/[id]/lessons/route.ts
+   4:10  warning  'and' is defined but never used     @typescript-eslint/no-unused-vars
+  77:5   warning  'params' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/dawit/Documents/Memarya/src/app/api/admin/courses/[id]/quiz/route.ts
+   4:10  warning  'and' is defined but never used           @typescript-eslint/no-unused-vars
+  62:38  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/dawit/Documents/Memarya/src/app/api/admin/courses/[id]/route.ts
+   15:10  warning  'and' is defined but never used           @typescript-eslint/no-unused-vars
+  121:37  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  121:69  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  138:39  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  138:71  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  151:16  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  152:26  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/dawit/Documents/Memarya/src/app/api/admin/lessons/[lessonId]/components/route.ts
+  37:16  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/dawit/Documents/Memarya/src/app/api/admin/lessons/components/[id]/route.ts
+  33:16  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/dawit/Documents/Memarya/src/app/api/admin/quizzes/route.ts
+  1:10  warning  'NextRequest' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/dawit/Documents/Memarya/src/app/api/admin/register/route.ts
+  8:10  warning  'randomUUID' is defined but never used  @typescript-eslint/no-unused-vars
+  9:18  warning  'argon2Hash' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/dawit/Documents/Memarya/src/app/api/certificates/[courseId]/pdf/route.ts
+  129:11  warning  'title' is assigned a value but never used                                                                           @typescript-eslint/no-unused-vars
+  243:9   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  286:9   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+
+/home/dawit/Documents/Memarya/src/app/api/courses/[id]/route.ts
+  4:10  warning  'and' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/dawit/Documents/Memarya/src/app/api/courses/categories/route.ts
+   3:10  warning  'coursesTable' is defined but never used  @typescript-eslint/no-unused-vars
+   6:27  warning  '_req' is defined but never used          @typescript-eslint/no-unused-vars
+  12:24  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/dawit/Documents/Memarya/src/app/api/courses/route.ts
+  43:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  48:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  53:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/dawit/Documents/Memarya/src/app/api/ide/run/route.ts
+  67:11  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/dawit/Documents/Memarya/src/app/api/ide/runtimes/route.ts
+   1:10  warning  'NextRequest' is defined but never used  @typescript-eslint/no-unused-vars
+  15:12  warning  'e' is defined but never used            @typescript-eslint/no-unused-vars
+
+/home/dawit/Documents/Memarya/src/app/api/learn/[courseId]/[lessonId]/quiz/submit/route.ts
+  9:10  warning  'and' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/dawit/Documents/Memarya/src/app/api/learn/[courseId]/quiz/submit/route.ts
+  8:10  warning  'and' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/dawit/Documents/Memarya/src/app/api/settings/password/route.ts
+  3:27  warning  'authUser' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/dawit/Documents/Memarya/src/app/courses/[id]/page.tsx
+   20:3   warning  'FastForward' is defined but never used                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   42:20  warning  'setDuration' is assigned a value but never used                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+  405:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/home/dawit/Documents/Memarya/src/app/ide/page.tsx
+   89:17  warning  'setFiles' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  108:30  error    Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+
+/home/dawit/Documents/Memarya/src/app/learn/[courseId]/[lessonId]/page.tsx
+    3:41  warning  'useRef' is defined but never used                               @typescript-eslint/no-unused-vars
+  175:48  error    Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  239:26  error    Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  616:33  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  616:50  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+/home/dawit/Documents/Memarya/src/app/learn/[courseId]/[lessonId]/quiz/page.tsx
+  107:30  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/home/dawit/Documents/Memarya/src/app/learn/[courseId]/flashcards/page.tsx
+  16:9   warning  'router' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  82:59  error    Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+
+/home/dawit/Documents/Memarya/src/app/learn/[courseId]/quiz/page.tsx
+  65:13  warning  'data' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/dawit/Documents/Memarya/src/app/page.tsx
+  14:3  warning  'BookOpen' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/dawit/Documents/Memarya/src/components/admin/edit-component-modal.tsx
+   71:54  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+   73:56  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+  120:16  warning  'err' is defined but never used                                                                                       @typescript-eslint/no-unused-vars
+  136:18  warning  'e' is defined but never used                                                                                         @typescript-eslint/no-unused-vars
+  149:6   warning  React Hook useEffect has a missing dependency: 'config?.questions'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  155:42  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+  235:32  warning  'e' is defined but never used                                                                                         @typescript-eslint/no-unused-vars
+
+/home/dawit/Documents/Memarya/src/components/auth/social.tsx
+  9:10  warning  'loading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/dawit/Documents/Memarya/src/components/layout/header.tsx
+  80:16  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/dawit/Documents/Memarya/src/components/learn/IDEExercise.tsx
+  2:12  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  5:39  warning  'config' is defined but never used        @typescript-eslint/no-unused-vars
+
+/home/dawit/Documents/Memarya/src/components/learn/QuizComponent.tsx
+  22:12  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  41:6   warning  React Hook useEffect has a missing dependency: 'loadQuiz'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  51:61  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+
+/home/dawit/Documents/Memarya/src/components/learn/TerminalExercise.tsx
+  2:12  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  5:44  warning  'config' is defined but never used        @typescript-eslint/no-unused-vars
+
+/home/dawit/Documents/Memarya/src/components/learn/VideoContent.tsx
+  11:10  warning  'Button' is defined but never used      @typescript-eslint/no-unused-vars
+  12:10  warning  'PlayCircle' is defined but never used  @typescript-eslint/no-unused-vars
+  26:3   warning  'thumbnail' is defined but never used   @typescript-eslint/no-unused-vars
+
+/home/dawit/Documents/Memarya/src/components/learn/mark-complete-button.tsx
+  42:26  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  86:14  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+
+/home/dawit/Documents/Memarya/src/types/pdfkit.d.ts
+  2:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 81 problems (37 errors, 44 warnings)
+
